@@ -377,5 +377,74 @@ mod tests {
                 HeapNode::new(2, 7),
             ]
         );
+
+        assert_eq!(min_heap.peek().unwrap().priority, 2);
+        assert_eq!(min_heap.get_top().unwrap().priority, 2);
+        assert_eq!(
+            min_heap.heap,
+            vec![
+                HeapNode::new(2, 7),
+                HeapNode::new(2, 3),
+                HeapNode::new(2, 6),
+                HeapNode::new(5, 1),
+                HeapNode::new(4, 5),
+                HeapNode::new(3, 2),
+            ]
+        );
+
+        assert_eq!(min_heap.peek().unwrap().priority, 2);
+        assert_eq!(min_heap.get_top().unwrap().priority, 2);
+        assert_eq!(
+            min_heap.heap,
+            vec![
+                HeapNode::new(2, 3),
+                HeapNode::new(3, 2),
+                HeapNode::new(2, 6),
+                HeapNode::new(5, 1),
+                HeapNode::new(4, 5),
+            ]
+        );
+
+        assert_eq!(min_heap.peek().unwrap().priority, 2);
+        assert_eq!(min_heap.get_top().unwrap().priority, 2);
+        assert_eq!(
+            min_heap.heap,
+            vec![
+                HeapNode::new(2, 6),
+                HeapNode::new(3, 2),
+                HeapNode::new(4, 5),
+                HeapNode::new(5, 1),
+            ]
+        );
+
+        assert_eq!(min_heap.peek().unwrap().priority, 2);
+        assert_eq!(min_heap.get_top().unwrap().priority, 2);
+        assert_eq!(
+            min_heap.heap,
+            vec![
+                HeapNode::new(3, 2),
+                HeapNode::new(5, 1),
+                HeapNode::new(4, 5),
+            ]
+        );
+
+        assert_eq!(min_heap.peek().unwrap().priority, 3);
+        assert_eq!(min_heap.get_top().unwrap().priority, 3);
+        assert_eq!(
+            min_heap.heap,
+            vec![HeapNode::new(4, 5), HeapNode::new(5, 1)]
+        );
+
+        assert_eq!(min_heap.peek().unwrap().priority, 4);
+        assert_eq!(min_heap.get_top().unwrap().priority, 4);
+        assert_eq!(min_heap.heap, vec![HeapNode::new(5, 1),]);
+
+        assert_eq!(min_heap.peek().unwrap().priority, 5);
+        assert_eq!(min_heap.get_top().unwrap().priority, 5);
+        assert!(min_heap.heap.is_empty());
+
+        assert!(min_heap.peek().is_none());
+        assert!(min_heap.get_top().is_none());
+        assert!(min_heap.heap.is_empty());
     }
 }
