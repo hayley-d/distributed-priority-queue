@@ -136,7 +136,13 @@ impl MinHeap {
             min = left_index;
         }
 
-        if right_child.is_some() && right_child.unwrap().priority < current.priority {
+        if right_child.is_some() && right_child.unwrap().priority < current.priority && min == index
+        {
+            min = right_index;
+        } else if right_child.is_some()
+            && right_child.unwrap().priority < left_child.unwrap().priority
+            && min == left_index
+        {
             min = right_index;
         }
 
@@ -152,7 +158,7 @@ impl MinHeap {
 
     /// Extracts the top node from the heap.
     pub fn get_top(&mut self) -> Option<HeapNode> {
-        if self.heap.len() <= 0 {
+        if self.heap.is_empty() {
             return None;
         }
 
@@ -161,6 +167,9 @@ impl MinHeap {
         }
 
         let mut top: HeapNode = HeapNode::new(0, 0);
+        //let last = self.heap.pop_back().unwrap();
+        //self.heap.push_front(last);
+
         let last_index = self.heap.len() - 1;
         mem::swap(&mut self.heap[last_index], &mut top);
         mem::swap(&mut top, &mut self.heap[0]);
