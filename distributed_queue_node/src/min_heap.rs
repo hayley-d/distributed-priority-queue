@@ -26,7 +26,7 @@ impl MinHeap {
     pub fn insert(&mut self, priority: u32, job_id: u64) {
         let node: HeapNode = HeapNode::new(priority, job_id);
         self.heap.push_back(node);
-        todo!()
+        self.bubble_up(self.heap.len() - 1);
     }
 
     fn heapify(&mut self, current_index: usize) {
@@ -83,7 +83,34 @@ impl MinHeap {
         }
     }
 
-    fn bubble_down(&mut self, index: usize) {}
+    fn bubble_down(&mut self, index: usize) {
+        let mut max: usize = index;
+
+        let current: &HeapNode = match self.heap.get(index) {
+            Some(c) => c,
+            None => return,
+        };
+
+        let left_index: usize = (index * 2) as usize + 1;
+        let right_index: usize = (index * 2) as usize + 2;
+        let (left_child, right_child): (Option<&HeapNode>, Option<&HeapNode>) =
+            self.get_children(index);
+
+        if left_child.is_some() && left_child.unwrap().priority < current.priority {
+            max = left_index;
+        }
+
+        if right_child.is_some() && right_child.unwrap().priority < current.priority {
+            max = right_index;
+        }
+
+        if index != max {
+            let mut temp: HeapNode = HeapNode::new(0, 0);
+            mem::swap(&mut self.heap[index], &mut temp);
+            mem::swap(&mut temp, &mut self.heap[max]);
+            return self.bubble_down(max);
+        }
+    }
 
     /// Extracts the top node from the heap.
     pub async fn get_top(&mut self) -> Option<HeapNode> {
@@ -96,8 +123,24 @@ impl MinHeap {
     }
 
     /// Changes the priority of a `HeapNode` in the min heap.
-    pub async fn change_priority(job_id: u64, new_priority: u32) -> bool {
-        todo!()
+    pub async fn change_priority(&mut self, job_id: u64, new_priority: u32) -> bool {
+        let target_index = match self.heap.iter().position(|n| n.job_id == job_id) {
+            Some(i) => i,
+            None => return false,
+        };
+
+        let target: &mut HeapNode = &mut self.heap[target_index];
+        let old_priority = target.priority;
+
+        target.priority = new_priority;
+
+        if old_priority < new_priority {
+            self.bubble_up(target_index);
+        } else {
+            self.bubble_down(target_index);
+        }
+
+        return true;
     }
 
     /// Fetches the child of the node at the given index, if there are any.
