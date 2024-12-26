@@ -1,0 +1,6 @@
+[package]
+name = "distributed_queue_node"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
