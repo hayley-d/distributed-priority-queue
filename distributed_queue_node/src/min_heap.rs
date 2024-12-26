@@ -1,5 +1,8 @@
+use std::collections::VecDeque;
+use std::mem;
+
 pub struct MinHeap {
-    heap: Vec<HeapNode>,
+    heap: VecDeque<HeapNode>,
 }
 
 pub struct HeapNode {
@@ -14,22 +17,82 @@ impl HeapNode {
 }
 impl MinHeap {
     pub fn new() -> Self {
-        return MinHeap { heap: Vec::new() };
+        return MinHeap {
+            heap: VecDeque::new(),
+        };
     }
 
     /// Inserts a new job into the min heap.
-    pub async fn insert(priority: u32, job_id: u64) -> bool {
+    pub fn insert(&mut self, priority: u32, job_id: u64) {
+        let node: HeapNode = HeapNode::new(priority, job_id);
+        self.heap.push_back(node);
         todo!()
     }
 
+    fn heapify(&mut self, current_index: usize) {
+        let current: &HeapNode = match self.heap.get(current_index) {
+            Some(node) => node,
+            None => return,
+        };
+        let left_index: usize = (current_index * 2) as usize + 1;
+        let right_index: usize = (current_index * 2) as usize + 2;
+
+        let (left_child, right_child): (Option<&HeapNode>, Option<&HeapNode>) =
+            self.get_children(current_index);
+
+        let mut smallest: usize = current_index;
+
+        if left_child.is_some() && left_child.unwrap().priority < current.priority {
+            smallest = left_index;
+        }
+
+        if right_child.is_some() && right_child.unwrap().priority < current.priority {
+            smallest = right_index;
+        }
+
+        if smallest != current_index {
+            let mut temp: HeapNode = HeapNode::new(0, 0);
+            mem::swap(&mut self.heap[current_index], &mut temp);
+            mem::swap(&mut temp, &mut self.heap[smallest]);
+            self.heapify(smallest);
+        }
+
+        return;
+    }
+
+    fn bubble_up(&mut self, index: usize) {
+        let mut i = index;
+        loop {
+            let current = match self.heap.get(i) {
+                Some(c) => c,
+                None => return,
+            };
+
+            let parent = match self.get_parent(i) {
+                Some(p) => p,
+                None => return,
+            };
+            if &parent.priority > &current.priority {
+                let parent: usize = ((i - 1) as f64 / 2.0).floor() as usize;
+                let mut temp: HeapNode = HeapNode::new(0, 0);
+                mem::swap(&mut self.heap[i], &mut temp);
+                mem::swap(&mut temp, &mut self.heap[parent]);
+
+                i = parent;
+            }
+        }
+    }
+
+    fn bubble_down(&mut self, index: usize) {}
+
     /// Extracts the top node from the heap.
-    pub async fn get_top() -> Option<HeapNode> {
-        todo!()
+    pub async fn get_top(&mut self) -> Option<HeapNode> {
+        return self.heap.pop_front();
     }
 
     /// Retrieves the value of the top node to see if there is a node in the heap.
-    pub async fn peek() -> Option<u64> {
-        todo!()
+    pub async fn peek(&self) -> Option<&HeapNode> {
+        return self.heap.get(0);
     }
 
     /// Changes the priority of a `HeapNode` in the min heap.
