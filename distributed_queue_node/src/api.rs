@@ -189,12 +189,27 @@ pub async fn enqueue(
     }));
 }
 
-#[post("/update/<job_id>", format = "json", data = "<request>")]
+#[post("/update", format = "json", data = "<request>")]
 pub async fn update(
-    job_id: usize,
     request: Json<UpdateRequest>,
     db: &rocket::State<Arc<Mutex<Client>>>,
     heap: &rocket::State<Arc<Mutex<MinHeap>>>,
-) -> Result<UpdateResponse, ApiError> {
-    todo!()
+) -> Result<Json<UpdateResponse>, ApiError> {
+    let mut heap = heap.lock().await;
+
+    heap.change_priority(request.job_id as u64, request.priority as u32);
+
+    let client = db.lock().await;
+
+    let _ = client
+        .execute(
+            "UPDATE jobs SET priority = $1 WHERE job_id = $2",
+            &[&request.priority, &request.job_id],
+        )
+        .await
+        .map_err(|_| ApiError::DatabaseError(format!("Error updating database")))?;
+
+    return Ok(Json(UpdateResponse {
+        message: format!("Database successfully updated"),
+    }));
 }
