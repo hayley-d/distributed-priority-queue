@@ -10,7 +10,7 @@ extern crate rocket;
 
 #[launch]
 async fn rocket() -> _ {
-    let min_heap: Arc<Mutex<MinHeap>> = Arc::new(Mutex::new(MinHeap::new()));
+    let min_heap: Arc<Mutex<MinHeap>> = Arc::new(Mutex::new(MinHeap::new(0.5)));
     let lamport_clock: Arc<Mutex<u64>> = Arc::new(Mutex::new(0));
     rocket::build()
         .attach(attatch_db())

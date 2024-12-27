@@ -5,6 +5,7 @@ use std::mem;
 #[derive(Debug)]
 pub struct MinHeap {
     pub heap: VecDeque<HeapNode>,
+    pub aging_factor: f32,
 }
 
 #[derive(PartialEq, Eq)]
@@ -51,9 +52,10 @@ impl fmt::Debug for HeapNode {
 }
 
 impl MinHeap {
-    pub fn new() -> Self {
+    pub fn new(aging_factor: f32) -> Self {
         return MinHeap {
             heap: VecDeque::new(),
+            aging_factor,
         };
     }
 
@@ -207,6 +209,16 @@ impl MinHeap {
         let parent: usize = ((current_index - 1) as f64 / 2.0).floor() as usize;
         return self.heap.get(parent);
     }
+
+    fn calculate_effective_priority(&mut self, job_id: u64, timestamp: u64) {
+        let job: &mut HeapNode = match self.heap.iter().position(|n| n.job_id == job_id) {
+            Some(i) => &mut self.heap[i],
+            None => return,
+        };
+
+        job.effective_priority =
+            job.priority - (self.aging_factor * (timestamp - job.enqueue_time) as f32) as u32;
+    }
 }
 
 #[cfg(test)]
@@ -215,7 +227,7 @@ mod tests {
 
     #[test]
     fn test_heap_insert() {
-        let mut min_heap: MinHeap = MinHeap::new();
+        let mut min_heap: MinHeap = MinHeap::new(0.5);
         // priority,job_id
         min_heap.insert(5, 1, 0);
         assert_eq!(min_heap.heap, vec![HeapNode::new(1, 5, 0)]);
@@ -320,7 +332,7 @@ mod tests {
 
     #[test]
     fn test_extraction() {
-        let mut min_heap: MinHeap = MinHeap::new();
+        let mut min_heap: MinHeap = MinHeap::new(0.5);
         // priority,job_id
         min_heap.insert(5, 1, 0);
         min_heap.insert(3, 2, 1);
