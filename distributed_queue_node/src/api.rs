@@ -1,5 +1,6 @@
 use crate::error::ApiError;
 use crate::min_heap::{HeapNode, MinHeap};
+use log::{error, info};
 use rocket::serde::json::Json;
 use rocket::{get, post};
 use serde::{Deserialize, Serialize};
@@ -96,7 +97,10 @@ pub async fn dequeue(
 
     let node: HeapNode = match heap.lock().await.get_top() {
         Some(n) => n,
-        None => return Err(ApiError::EmptyHeapError),
+        None => {
+            error!("Error: Attempt to pull from empty heap");
+            return Err(ApiError::EmptyHeapError);
+        }
     };
 
     // Increment logical time
@@ -105,12 +109,18 @@ pub async fn dequeue(
     let query = client
         .prepare("SELECT * FROM jobs WHERE job_id = $1")
         .await
-        .map_err(|_| ApiError::DatabaseError(format!("Error creating query")))?;
+        .map_err(|_| {
+            error!("Error: Failed to create SELECT query");
+            ApiError::DatabaseError(format!("Error creating query"))
+        })?;
 
     let row = client
         .query_one(&query, &[&(node.job_id as i64)])
         .await
-        .map_err(|_| ApiError::DatabaseError(format!("Error database SELECT query failed.")))?;
+        .map_err(|_| {
+            error!("Error: Attempt to SELECT from database failed");
+            ApiError::DatabaseError(format!("Error database SELECT query failed."))
+        })?;
 
     return Ok(Json(DequeueResponse {
         job_id: row.get(0),
@@ -135,9 +145,10 @@ pub async fn dequeue_amount(
 
     let mut jobs: Vec<DequeueResponse> = Vec::new();
 
-    let amount: usize = amount
-        .parse::<usize>()
-        .map_err(|_| ApiError::InternalServerError(format!("Provided non numerical amount")))?;
+    let amount: usize = amount.parse::<usize>().map_err(|_| {
+        error!("Error: Non-numerical amount provided by GET request in /dequeue/<amount>");
+        ApiError::InternalServerError(format!("Provided non numerical amount"))
+    })?;
 
     // Increment logical time
     *clock.lock().await += 1;
@@ -151,12 +162,18 @@ pub async fn dequeue_amount(
         let query = client
             .prepare("SELECT * FROM jobs WHERE job_id = $1")
             .await
-            .map_err(|_| ApiError::DatabaseError(format!("Error creating query")))?;
+            .map_err(|_| {
+                error!("Error: Failed to create SELECT query");
+                ApiError::DatabaseError(format!("Error creating query"))
+            })?;
 
         let row = client
             .query_one(&query, &[&(node.job_id as i64)])
             .await
-            .map_err(|_| ApiError::DatabaseError(format!("Error database SELECT query failed.")))?;
+            .map_err(|_| {
+                error!("Error: Failed to run SELECT query");
+                ApiError::DatabaseError(format!("Error database SELECT query failed."))
+            })?;
 
         jobs.push(DequeueResponse {
             job_id: row.get(0),
@@ -180,12 +197,18 @@ pub async fn enqueue(
     let query = client
         .prepare("INSERT INTO jobs (priority, payload) VALUES ($1,$2) RETURNING job_id")
         .await
-        .map_err(|_| ApiError::DatabaseError(format!("Error creating query")))?;
+        .map_err(|_| {
+            error!("Error: Failed to create INSERT query");
+            ApiError::DatabaseError(format!("Error creating query"))
+        })?;
 
     let row = client
         .query_one(&query, &[&request.priority, &request.payload])
         .await
-        .map_err(|_| ApiError::DatabaseError(format!("Error creating row")))?;
+        .map_err(|_| {
+            error!("Error: Failed to run INSERT query");
+            ApiError::DatabaseError(format!("Error creating row"))
+        })?;
 
     let job_id: i64 = row.get(0);
 
@@ -227,7 +250,13 @@ pub async fn update(
             &[&request.priority, &request.job_id],
         )
         .await
-        .map_err(|_| ApiError::DatabaseError(format!("Error updating database")))?;
+        .map_err(|_| {
+            error!(
+                "Error: Failed to run UPDATE query on job {}",
+                request.job_id
+            );
+            ApiError::DatabaseError(format!("Error updating database"))
+        })?;
 
     // Increment logical time
     *clock.lock().await += 1;
