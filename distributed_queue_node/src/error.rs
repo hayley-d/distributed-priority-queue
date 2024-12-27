@@ -13,6 +13,8 @@ pub enum ApiError {
     DatabaseError(String),
     /// Internal Server Error occurs when there is any other error not related to the database.
     InternalServerError(String),
+    /// Empty heap error occurs when the heap is empty
+    EmptyHeapError,
 }
 
 impl fmt::Display for ApiError {
@@ -20,6 +22,7 @@ impl fmt::Display for ApiError {
         match self {
             ApiError::DatabaseError(s) => write!(f, "Database Error: {}", s),
             ApiError::InternalServerError(s) => write!(f, "Internal Server Error: {}", s),
+            ApiError::EmptyHeapError => write!(f, "Empty Heap Error"),
         }
     }
 }
@@ -32,6 +35,7 @@ impl<'r> Responder<'r, 'static> for ApiError {
         let status = match self {
             ApiError::DatabaseError(_) => Status::InternalServerError,
             ApiError::InternalServerError(_) => Status::InternalServerError,
+            ApiError::EmptyHeapError => Status::InternalServerError,
         };
 
         return Response::build()

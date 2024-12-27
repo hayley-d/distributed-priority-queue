@@ -11,9 +11,14 @@ use crate::min_heap::{HeapNode, MinHeap};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DequeueResponse {
-    job_id: u64,
-    priority: u32,
+    job_id: i64,
+    priority: i32,
     payload: Vec<u8>,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct BatchDequeueResponse {
+    jobs: Vec<DequeueResponse>,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -30,11 +35,29 @@ pub struct CreationResponse {
 #[get("/dequeue")]
 pub async fn dequeue(
     db: &rocket::State<Arc<Mutex<Client>>>,
+    heap: &rocket::State<Arc<Mutex<MinHeap>>>,
 ) -> Result<Json<DequeueResponse>, ApiError> {
+    let client = db.lock().await;
+
+    let node: HeapNode = match heap.lock().await.get_top() {
+        Some(n) => n,
+        None => return Err(ApiError::EmptyHeapError),
+    };
+
+    let query = client
+        .prepare("SELECT * FROM jobs WHERE job_id = $1")
+        .await
+        .map_err(|_| ApiError::DatabaseError(format!("Error creating query")))?;
+
+    let row = client
+        .query_one(&query, &[&(node.job_id as i64)])
+        .await
+        .map_err(|_| ApiError::DatabaseError(format!("Error database SELECT query failed.")))?;
+
     return Ok(Json(DequeueResponse {
-        job_id: 0,
-        priority: 0,
-        payload: Vec::new(),
+        job_id: row.get(0),
+        priority: row.get(1),
+        payload: row.get(2),
     }));
 }
 
@@ -42,12 +65,44 @@ pub async fn dequeue(
 pub async fn dequeue_amount(
     amount: String,
     db: &rocket::State<Arc<Mutex<Client>>>,
-) -> Result<Json<DequeueResponse>, ApiError> {
-    return Ok(Json(DequeueResponse {
-        job_id: 0,
-        priority: 0,
-        payload: Vec::new(),
-    }));
+    heap: &rocket::State<Arc<Mutex<MinHeap>>>,
+) -> Result<Json<BatchDequeueResponse>, ApiError> {
+    let client = db.lock().await;
+    let mut heap = heap.lock().await;
+
+    if heap.heap.is_empty() {
+        return Err(ApiError::EmptyHeapError);
+    }
+
+    let mut jobs: Vec<DequeueResponse> = Vec::new();
+    let amount: usize = amount
+        .parse::<usize>()
+        .map_err(|_| ApiError::InternalServerError(format!("Provided non numerical amount")))?;
+
+    for _ in 0..amount {
+        let node: HeapNode = match heap.get_top() {
+            Some(n) => n,
+            None => return Err(ApiError::EmptyHeapError),
+        };
+
+        let query = client
+            .prepare("SELECT * FROM jobs WHERE job_id = $1")
+            .await
+            .map_err(|_| ApiError::DatabaseError(format!("Error creating query")))?;
+
+        let row = client
+            .query_one(&query, &[&(node.job_id as i64)])
+            .await
+            .map_err(|_| ApiError::DatabaseError(format!("Error database SELECT query failed.")))?;
+
+        jobs.push(DequeueResponse {
+            job_id: row.get(0),
+            priority: row.get(1),
+            payload: row.get(2),
+        });
+    }
+
+    return Ok(Json(BatchDequeueResponse { jobs }));
 }
 
 #[post("/enqueue", format = "json", data = "<request>")]
