@@ -210,14 +210,57 @@ impl MinHeap {
         return self.heap.get(parent);
     }
 
-    fn calculate_effective_priority(&mut self, job_id: u64, timestamp: u64) {
-        let job: &mut HeapNode = match self.heap.iter().position(|n| n.job_id == job_id) {
-            Some(i) => &mut self.heap[i],
-            None => return,
-        };
+    pub fn calculate_effective_priority(&mut self, timestamp: u64) {
+        for job in self.heap.iter_mut() {
+            job.effective_priority =
+                job.priority - (self.aging_factor * (timestamp - job.enqueue_time) as f32) as u32;
+        }
 
-        job.effective_priority =
-            job.priority - (self.aging_factor * (timestamp - job.enqueue_time) as f32) as u32;
+        self.heapify();
+    }
+
+    fn heapify(&mut self) {
+        let mut index: usize = 0;
+        loop {
+            let current = match self.heap.get(index) {
+                Some(c) => c,
+                None => break,
+            };
+
+            let left_idx = 2 * index + 1;
+            let right_idx = 2 * index + 2;
+
+            let left_node = self.heap.get(left_idx);
+            let right_node = self.heap.get(right_idx);
+
+            let mut min = index;
+
+            if left_node.is_some()
+                && left_node.unwrap().effective_priority < current.effective_priority
+            {
+                min = left_idx;
+            }
+
+            if right_node.is_some()
+                && right_node.unwrap().effective_priority < current.effective_priority
+                || left_node.is_some()
+                    && right_node.is_some()
+                    && right_node.unwrap().effective_priority
+                        < left_node.unwrap().effective_priority
+            {
+                min = right_idx;
+            }
+
+            if min != index {
+                //swap
+                let mut temp: HeapNode = HeapNode::new(0, 0, 0);
+                mem::swap(&mut self.heap[index], &mut temp);
+                mem::swap(&mut temp, &mut self.heap[min]);
+                mem::swap(&mut self.heap[index], &mut temp);
+            }
+
+            index = min;
+        }
     }
 }
 

@@ -196,6 +196,10 @@ pub async fn enqueue(
         .await
         .insert(request.priority as u32, job_id as u64, *clock.lock().await);
 
+    heap.lock()
+        .await
+        .calculate_effective_priority(*clock.lock().await);
+
     println!("Inserted job with job_id {} into jobs table", job_id);
 
     return Ok(Json(CreationResponse {
@@ -227,6 +231,8 @@ pub async fn update(
 
     // Increment logical time
     *clock.lock().await += 1;
+
+    heap.calculate_effective_priority(*clock.lock().await);
 
     return Ok(Json(UpdateResponse {
         message: format!(
