@@ -81,7 +81,7 @@ impl MinHeap {
                 None => return,
             };
 
-            if &parent.priority > &current.priority {
+            if &parent.effective_priority > &current.effective_priority {
                 if i == 0 {
                     return;
                 }
@@ -112,15 +112,19 @@ impl MinHeap {
         let (left_child, right_child): (Option<&HeapNode>, Option<&HeapNode>) =
             self.get_children(index);
 
-        if left_child.is_some() && left_child.unwrap().priority < current.priority {
+        if left_child.is_some()
+            && left_child.unwrap().effective_priority < current.effective_priority
+        {
             min = left_index;
         }
 
-        if right_child.is_some() && right_child.unwrap().priority < current.priority && min == index
+        if right_child.is_some()
+            && right_child.unwrap().effective_priority < current.effective_priority
+            && min == index
         {
             min = right_index;
         } else if right_child.is_some()
-            && right_child.unwrap().priority < left_child.unwrap().priority
+            && right_child.unwrap().effective_priority < left_child.unwrap().effective_priority
             && min == left_index
         {
             min = right_index;
@@ -175,6 +179,7 @@ impl MinHeap {
         let old_priority = target.priority;
 
         target.priority = new_priority;
+        target.effective_priority = new_priority;
 
         if old_priority < new_priority {
             self.bubble_up(target_index);
