@@ -11,8 +11,10 @@ extern crate rocket;
 #[launch]
 async fn rocket() -> _ {
     let min_heap: Arc<Mutex<MinHeap>> = Arc::new(Mutex::new(MinHeap::new()));
+    let lamport_clock: Arc<Mutex<u64>> = Arc::new(Mutex::new(0));
     rocket::build()
         .attach(attatch_db())
         .manage(min_heap)
+        .manage(lamport_clock)
         .mount("/", routes![dequeue, dequeue_amount])
 }

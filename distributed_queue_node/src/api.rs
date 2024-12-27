@@ -73,6 +73,7 @@ pub struct EnqueueRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreationResponse {
     message: String,
+    job_id: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -89,6 +90,7 @@ pub struct UpdateResponse {
 pub async fn dequeue(
     db: &rocket::State<Arc<Mutex<Client>>>,
     heap: &rocket::State<Arc<Mutex<MinHeap>>>,
+    clock: &rocket::State<Arc<Mutex<u64>>>,
 ) -> Result<Json<DequeueResponse>, ApiError> {
     let client = db.lock().await;
 
@@ -96,6 +98,9 @@ pub async fn dequeue(
         Some(n) => n,
         None => return Err(ApiError::EmptyHeapError),
     };
+
+    // Increment logical time
+    *clock.lock().await += 1;
 
     let query = client
         .prepare("SELECT * FROM jobs WHERE job_id = $1")
@@ -119,6 +124,7 @@ pub async fn dequeue_amount(
     amount: String,
     db: &rocket::State<Arc<Mutex<Client>>>,
     heap: &rocket::State<Arc<Mutex<MinHeap>>>,
+    clock: &rocket::State<Arc<Mutex<u64>>>,
 ) -> Result<Json<BatchDequeueResponse>, ApiError> {
     let client = db.lock().await;
     let mut heap = heap.lock().await;
@@ -128,9 +134,13 @@ pub async fn dequeue_amount(
     }
 
     let mut jobs: Vec<DequeueResponse> = Vec::new();
+
     let amount: usize = amount
         .parse::<usize>()
         .map_err(|_| ApiError::InternalServerError(format!("Provided non numerical amount")))?;
+
+    // Increment logical time
+    *clock.lock().await += 1;
 
     for _ in 0..amount {
         let node: HeapNode = match heap.get_top() {
@@ -163,6 +173,7 @@ pub async fn enqueue(
     request: Json<EnqueueRequest>,
     db: &rocket::State<Arc<Mutex<Client>>>,
     heap: &rocket::State<Arc<Mutex<MinHeap>>>,
+    clock: &rocket::State<Arc<Mutex<u64>>>,
 ) -> Result<Json<CreationResponse>, ApiError> {
     let client = db.lock().await;
 
@@ -178,14 +189,18 @@ pub async fn enqueue(
 
     let job_id: i64 = row.get(0);
 
+    // Increment logical time
+    *clock.lock().await += 1;
+
     heap.lock()
         .await
-        .insert(request.priority as u32, job_id as u64);
+        .insert(request.priority as u32, job_id as u64, *clock.lock().await);
 
     println!("Inserted job with job_id {} into jobs table", job_id);
 
     return Ok(Json(CreationResponse {
-        message: format!("Job successully added to database"),
+        message: format!("Job with job_id={} successully added to database", job_id),
+        job_id: job_id as u64,
     }));
 }
 
@@ -194,6 +209,7 @@ pub async fn update(
     request: Json<UpdateRequest>,
     db: &rocket::State<Arc<Mutex<Client>>>,
     heap: &rocket::State<Arc<Mutex<MinHeap>>>,
+    clock: &rocket::State<Arc<Mutex<u64>>>,
 ) -> Result<Json<UpdateResponse>, ApiError> {
     let mut heap = heap.lock().await;
 
@@ -209,7 +225,13 @@ pub async fn update(
         .await
         .map_err(|_| ApiError::DatabaseError(format!("Error updating database")))?;
 
+    // Increment logical time
+    *clock.lock().await += 1;
+
     return Ok(Json(UpdateResponse {
-        message: format!("Database successfully updated"),
+        message: format!(
+            "Job with job_id={} has been successfully updated",
+            request.job_id
+        ),
     }));
 }
