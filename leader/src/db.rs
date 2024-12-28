@@ -1,26 +1,8 @@
 use crate::error::ApiError;
 use dotenv::dotenv;
-use rocket::fairing::AdHoc;
 use rocket::tokio;
-use rocket::tokio::sync::Mutex;
 use std::env;
-use std::sync::Arc;
 use tokio_postgres::{Client, NoTls};
-
-pub fn attatch_db() -> AdHoc {
-    AdHoc::on_ignite("Attatch DB", |rocket| async {
-        match connect_to_db().await {
-            Ok(client) => {
-                println!("Database Connection Established");
-                rocket.manage(Arc::new(Mutex::new(client)))
-            }
-            Err(e) => {
-                eprintln!("Database Connection Error: {:?}", e);
-                std::process::exit(1);
-            }
-        }
-    })
-}
 
 pub async fn connect_to_db() -> Result<Client, ApiError> {
     dotenv().ok();
