@@ -2,6 +2,12 @@
 
 A distributed priority queue implementation It aims to provide an efficient, fault-tolerant, and scalable system for managing prioritized jobs in a distributed environment. System supports advanced features such as the leader-follower pattern with Paxos, Round-Robin algorithm working with wieighted priority and long polling to pull jobs from distributed nodes.
 
+## Main points 
+- Use of protocol Buffers and gRPC
+- Use of leader follower pattern with quarums
+- use of ROund-robin in combination with weighted priority for load balancer
+- use of paxos for leader follower fault tolerance
+- use of long polling for consumer (and pull model)
 
 ## Features
 ### 1. Distributed System Replication
@@ -11,7 +17,11 @@ This pattern ensures:
 -
 -
 
-
+### 2. Paxos
+- **Fault tolerance** is achieved since Paxos is designed to handle node failures and communication delays.
+- **Quorum** is used to ensure enough nodes see and accept the value.
+- acheives **data consistency** and **fault tolerance** in the distributed system.
+- 
 ### 2. Task Distribution Strategy
 
 Inspired by Kafka's design, tasks are enqueued into priority buckets. 
@@ -53,9 +63,9 @@ Request Log:
 ### 5. Lamport Timestamps
 ## Acknowledgements
 
- - [FOQS Distributed Priority Queue](https://engineering.fb.com/2021/02/22/production-engineering/foqs-scaling-a-distributed-priority-queue/)
- - [Distributed Priority Queue Design](https://www.youtube.com/watch?v=PFsjVT-XwmA) 
- - [Prevent starvation in priority queue](https://stackoverflow.com/questions/6393135/how-to-prevent-low-priority-messages-on-an-activemq-prioritized-queue-from-being)
+ - [Awesome Readme Templates](https://awesomeopensource.com/project/elangosundar/awesome-README-templates)
+ - [Awesome README](https://github.com/matiassingers/awesome-readme)
+ - [How to write a Good readme](https://bulldogjob.com/news/449-how-to-write-a-good-readme-for-your-github-project)
 
 
 ### Roadmap

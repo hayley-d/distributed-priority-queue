@@ -1,6 +1,6 @@
 use crate::error::ApiError;
 use crate::min_heap::{HeapNode, MinHeap};
-use log::{error, info};
+use log::error;
 use rocket::serde::json::Json;
 use rocket::{get, post};
 use serde::{Deserialize, Serialize};
