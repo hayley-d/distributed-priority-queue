@@ -1,23 +1,26 @@
-use proto::job_management::{
-    EnqueueRequest, Job, JobRequest, JobResponse, JobService, JobServiceServer,
-};
+use crate::job_management::job_service_server::JobService;
+use crate::job_management::{EnqueueRequest, Job, JobRequest, JobResponse, PaxosPrepare};
+use crate::node_state::NodeState;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use tokio_postgres::Client;
 use tonic::{transport::Server, Request, Response, Status};
-
-
-struct EnqueueRequest {
-    priority: u32,
-    payload: Vec<u8>,
+pub mod proto {
+    tonic::include_proto!("job_management");
 }
 
-struct JobResponse {
-    job_id: u64,
+pub struct LocalJobService {
+    node_state: Arc<Mutex<NodeState>>,
 }
 
-#[derive(Default)]
-pub struct MyJobService;
+impl LocalJobService {
+    pub async fn new(node_state: Arc<Mutex<NodeState>>) -> Self {
+        LocalJobService { node_state }
+    }
+}
 
 #[tonic::async_trait]
-impl JobService for MyJobService {
+impl JobService for LocalJobService {
     // EnqueueJob RPC method
     async fn enqueue_job(
         &self,
@@ -28,9 +31,26 @@ impl JobService for MyJobService {
         let payload = enqueue_request.payload;
 
         let paxos_prepare = PaxosPrepare {
-            proposal_number: 
+            proposal_number: self.node_state.lock().await.increment_timestamp(),
         };
 
-        Ok(Response::new(JobResponse { job_id })) // Send back the job
+        let mut responses = Vec::new();
+
+        for follower in self.node_state.lock().await.followers {}
+
+        Ok(Response::new(JobResponse {
+            job: Some(Job {
+                job_id,
+                priority,
+                payload,
+            }),
+        }))
+    }
+
+    async fn get_task(
+        &self,
+        request: Request<JobRequest>,
+    ) -> Result<Response<JobResponse>, Status> {
+        todo!()
     }
 }

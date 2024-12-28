@@ -1,31 +1,26 @@
 use std::sync::Arc;
 
 use leader::api::{dequeue, dequeue_amount};
-use leader::db::attatch_db;
-use leader::request_logger::RequestLogger;
+use leader::grpc::LocalJobService;
+use leader::node_state::NodeState;
 use tokio::sync::Mutex;
 
-#[macro_use]
-extern crate rocket;
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize NodeState asynchronously
+    let followers = vec!["http://follower1", "http://follower2"]; // Example list of followers
 
-#[launch]
-async fn rocket() -> _ {
-    // initialize logging using the config file
-    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
+    let node_state = NodeState::new(followers);
 
-    let lamport_clock: Arc<Mutex<u64>> = Arc::new(Mutex::new(0));
-    let node_id: u64 = match std::env::args().collect::<Vec<String>>().get(1) {
-        Some(id) => match id.parse::<u64>() {
-            Ok(i) => i,
-            Err(_) => std::process::exit(1),
-        },
-        None => std::process::exit(1),
-    };
+    // Initialize the job service with the node_state
+    let job_service = LocalJobService::new(node_state).await;
 
-    rocket::build()
-        .attach(attatch_db())
-        .attach(RequestLogger)
-        .manage(lamport_clock)
-        .manage(Arc::new(node_id))
-        .mount("/", routes![dequeue, dequeue_amount])
+    let addr = "[::1]:50051".parse()?;
+    let svc = JobServiceServer::new(job_service);
+
+    println!("Leader service listening on {:?}", addr);
+
+    Server::builder().add_service(svc).serve(addr).await?;
+
+    Ok(())
 }

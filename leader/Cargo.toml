@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-proto = { path = "../proto" }
 tokio = {version="1.42.0",features=["full"]}
 rocket = {version="0.5.1",features=["tls","json","secrets"]}
 serde = {version="1.0.216",features=["derive"]}
