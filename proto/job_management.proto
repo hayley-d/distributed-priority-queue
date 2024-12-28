@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package job_management;
+
+// Job structure
+message Job {
+  int64 job_id = 1;  
+  int32 priority = 2;
+  bytes payload = 3;
+}
+
+// Enqueue Request (job not created yet)
+message EnqueueRequest {
+    int32 priority = 1;
+    bytes payload = 2;
+}
+
+// Request for getting a task
+message JobRequest {
+  int64 job_id = 1;
+}
+
+// Response containing task data
+message JobResponse {
+  Job job = 1;
+}
+
+// Paxos messages
+message PaxosPrepare {
+  int32 proposal_number = 1; // a unique identifier for current proposal
+}
+
+message PaxosPromise {
+  int32 proposal_number = 1; // Proposal number being accepted
+  int32 accepted_value = 2; 
+}
+
+// Sent from the leader to the follower
+message PaxosPropose {
+  int32 proposal_number = 1;
+  Job proposed_job = 2;
+}
+
+// Sent from the follower to the leader
+message PaxosAccept {
+  int32 proposal_number = 1;
+  bool accepted = 2;
+}
+
+// Sent from the leader to the follower
+message PaxosCommit {
+    int32 proposal_number = 1;
+    bool commit = 2;
+}
+
+// Message to represent a request to get a job (long-polling)
+message PollJobRequest {
+    int32 consumer_id = ;
+    int32 timeout_seconds = 2;
+}
+
+// Mesage representing a response from the long-polling request
+message PollJobResponse {
+    bool success = 1; // if the job was successfully fetched
+    Job job = 2; // The job assigned to the consumer
+}
+
+// Service definition for Job management and Paxos protocol
+service JobService {
+  rpc EnqueueJob (EnqueueRequest) returns (Job);
+  rpc GetTask (JobRequest) returns (JobResponse);
+}
+
+service LongPollingServie {
+    rpc Poll (PollJobRequest) returns (PollJobResponse);
+}
+
+service PaxosService {
+  rpc Prepare (PaxosPrepare) returns (PaxosPromise);
+  rpc Propose (PaxosPropose) returns (PaxosAccept);
+  rpc Propose (PaxosCommit) returns (Empty);
+
+}
+
