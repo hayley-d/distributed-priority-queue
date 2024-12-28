@@ -1,6 +1,10 @@
 use tonic_build;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tonic_build::compile_protos("job_management.proto")?;
-    Ok(())
+fn main() {
+    tonic_build::configure()
+        .build_server(true) // Generates server code
+        .build_client(true) // Generates client code
+        .out_dir("src/generated") // Where to place the generated code
+        .compile_protos(&["proto/job_management.proto"], &["proto"])
+        .unwrap();
 }

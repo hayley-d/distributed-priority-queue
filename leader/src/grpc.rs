@@ -36,7 +36,9 @@ impl JobService for LocalJobService {
 
         let mut responses = Vec::new();
 
-        for follower in self.node_state.lock().await.followers {}
+        for follower in self.node_state.lock().await.followers {
+            let mut client = PaxosClient::connect(follower).await.unwrap();
+        }
 
         Ok(Response::new(JobResponse {
             job: Some(Job {
