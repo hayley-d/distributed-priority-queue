@@ -1,94 +1,85 @@
-# distributed-priority-queue
+<p><a target="_blank" href="https://app.eraser.io/workspace/PgkXybzAAX4Qs9me1TaF" id="edit-in-eraser-github-link"><img alt="Edit in Eraser" src="https://firebasestorage.googleapis.com/v0/b/second-petal-295822.appspot.com/o/images%2Fgithub%2FOpen%20in%20Eraser.svg?alt=media&amp;token=968381c8-a7e7-472a-8ed6-4a6626da5501"></a></p>
 
-A distributed priority queue implementation It aims to provide an efficient, fault-tolerant, and scalable system for managing prioritized jobs in a distributed environment. System supports advanced features such as the leader-follower pattern with Paxos, Round-Robin algorithm working with wieighted priority and long polling to pull jobs from distributed nodes.
+# Distributed Priority Queue
+A scalable, distributed priority queue system designed to efficiently handle high-concurrency workloads. This project highlights key concepts in distributed systems, fault tolerance, and load balancing, drawing inspiration from real-world applications like Facebook's priority queue.
 
-## Main points 
-- Use of protocol Buffers and gRPC
-- Use of leader follower pattern with quarums
-- use of ROund-robin in combination with weighted priority for load balancer
-- use of paxos for leader follower fault tolerance
-- use of long polling for consumer (and pull model)
+![Figure 1](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---2kLg186UBYZDrdo8kKB6w---figure---ts0fckGEDmK8D0sQ9NRoyw.png "Figure 1")
 
 ## Features
-### 1. Distributed System Replication
-The system is built around a leader-follower pattern comprising of a single leader and 2 followers with a quorum number of 1.
-This pattern ensures:
--
--
--
-
-### 2. Paxos
-- **Fault tolerance** is achieved since Paxos is designed to handle node failures and communication delays.
-- **Quorum** is used to ensure enough nodes see and accept the value.
-- acheives **data consistency** and **fault tolerance** in the distributed system.
-- 
-### 2. Task Distribution Strategy
-
-Inspired by Kafka's design, tasks are enqueued into priority buckets. 
-* **Round-Robin Algorithm** pulls jobs from the buckets and evenly distributes them to nodes.
-* **Weighted priority** assignes weights to priority buckets to constol the share of jobs pulled from each bucket.
+### Protocol Buffers and gRPC
+- Utilises **Protocol Buffers (Protobuf)** for efficient and language-agnostic serialization of messages.
+- **gRPC** is used for communication between services, ensuring fast and reliable bi-directional streaming.
+### Paxos for Leader-Follower Fault Tolerance
+- **Paxos** ensures fault tolerance within the leader-follower replication model, maintaining consistency and availability even if nodes or leaders fail.
+### Leader-Follower Pattern with Quorum-Based Replication
+- **Leader-Follower Model**: A leader node handles write operations, while follower nodes replicate data for fault tolerance.
+- **Quorum-Based Approach**: Requires a majority of nodes to acknowledge a change before it’s considered committed, ensuring data consistency.
+### Round-Robin Load Balancer with Weighted Priorities
+- A **Round-Robin Load Balancer** distributes tasks evenly across nodes while respecting job priority.
+- **Weighted Priorities** ensure that tasks are scheduled according to their importance:
     - Priority 1: 30% of scheduling time
     - Priority 2: 25% of scheduling time
     - Priority 3: 20% of scheduling time
     - Priority 4: 15% of scheduling time
     - Priority 5: 10% of scheduling time
+### Long Polling with Pull Model for Consumers
+- **Long Polling** allows consumers to pull jobs from the queue only when they are available, optimizing resource usage and reducing idle time.
+- **Pull Model** ensures that consumers only retrieve jobs when needed, improving overall efficiency.
+### PostgreSQL Integration
+The system uses PostgreSQL for persistent job storage. 
 
-### 3. PostgreSQL Integration
-The system uses PostgreSQL as the persistent database for storing jobs.
-The schema for the table is:
-```sql
+The schema for the job table:
+
+```
 CREATE TABLE jobs (
-    job_id BIGSERIAL PRIMARY KEY,                   -- Auto-incrementing job_id (PRIMARY KEY automatically creates an index)
+    job_id BIGSERIAL PRIMARY KEY,                   -- Auto-incrementing job_id
     priority INT CHECK (priority BETWEEN 1 AND 5),  -- Validate priority (1-5)
-    payload BYTEA,                                  -- Payload as a byte array 
+    payload BYTEA,                                  -- Payload as a byte array
     created_at TIMESTAMPTZ DEFAULT now(),           -- Timestamp for creation
 );
 ```
+### Logging
+- **Error Logs**: Tracks and reports errors with relevant details.
+- **Request Logs**: Logs details about requests received by each node.
+**Example log entries:**
 
-### 4. Logging and Monitoring
-The system provides comprehensive logging accross all subsytems and nodes.
-* **Error logs** capture and report any errors that occur with relavent details.
-* **Request logs** capture details about requests recieved for the given node.
-
-#### Example Log Entries:
 Error Log:
-```rust
+
+```
 2024-12-27 12:34:56.789 [ERROR] <error_route>: <error_message>
 ```
-Request Log:
-```rust
+Request Log: 
+
+```
 2024-12-27 12:45:00.123 [INFO] index: Received <request_method> request for <request_uri> from IP: <client_IP>
 ```
+## System Architecture
+The system consists of four main components, each with distinct responsibilities:
 
-### 5. Lamport Timestamps
-## Acknowledgements
-
- - [Awesome Readme Templates](https://awesomeopensource.com/project/elangosundar/awesome-README-templates)
- - [Awesome README](https://github.com/matiassingers/awesome-readme)
- - [How to write a Good readme](https://bulldogjob.com/news/449-how-to-write-a-good-readme-for-your-github-project)
-
-
-### Roadmap
-
-1. Enqueue API, Insert Buffer and Load Balancer
-    - logging for errors and requests
-    - buffer implementation
-    - load balancer implementation (round robin and weighted priority)
-
-2. Node (Priority queue,dequeue API and Database)
-    
-
-3. Consumer logic for pulling jobs
-    - continuously fetch jobs from nodes
-    - process jobs and report results
-    - implement long polling mechanism for job retrieval
-    - process jobs in parallel to showcase concurrency
-    - implement retry mechanism?
-
----
-## Tech Stack
-
-* **Languages:** Rust (with tokio runtime)
-* **Databse:** PostgreSQL
+### 1. **Enqueue Manager**
+- **Role**: Provides an API for job submission, buffering incoming tasks, and distributing them to nodes.
+- **Functionality**:
+    - Buffers tasks temporarily before distributing them based on priority and node availability.
+    - The **Round-Robin Load Balancer** distributes tasks according to weighted priority, ensuring high-priority tasks are prioritized but maintaining fairness across all nodes.
+### 2. **Leader**
+- **Role**: The leader node processes job enqueue requests and manages data replication across followers.
+- **Functionality**:
+    - Receives job submission requests from the enqueue manager.
+    - Inserts new jobs into the database after the Paxos consensus protocol ensures data consistency.
+    - Maintains fault tolerance by managing leader-follower replication.
+### 3. **Follower**
+- **Role**: The follower nodes contain local priority queues and implement long-polling mechanisms for pulling jobs.
+- **Functionality**:
+    - Each follower node maintains a local queue and processes jobs based on their priority.
+    - Long-polling ensures that a consumer only retrieves jobs when they are available, optimizing system resources and reducing idle time.
+### 4. **Consumer**
+- **Role**: The consumer pulls jobs from the distributed queue, processes them, and acknowledges their completion.
+- **Functionality**:
+    - Uses long-polling to efficiently wait for and fetch jobs, ensuring resources are not wasted while waiting for tasks.
+![Figure 2](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---8GQyMNk0DY7yjkOKyhUmc---figure---5txp8ax3V7Fd65uKuRSIaA.png "Figure 2")
 
 
+
+
+
+<!--- Eraser file: https://app.eraser.io/workspace/PgkXybzAAX4Qs9me1TaF --->
