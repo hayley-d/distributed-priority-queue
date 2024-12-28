@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package job_management;
 
+
 // Job structure
 message Job {
   int64 job_id = 1;  
@@ -53,6 +54,10 @@ message PaxosCommit {
     bool commit = 2;
 }
 
+message PaxosCommitResponse {
+    int32 proposal_number = 1;
+}
+
 // Message to represent a request to get a job (long-polling)
 message PollJobRequest {
     int32 consumer_id = 1;
@@ -78,7 +83,7 @@ service LongPollingService {
 service PaxosService {
   rpc Prepare (PaxosPrepare) returns (PaxosPromise);
   rpc Propose (PaxosPropose) returns (PaxosAccept);
-  rpc Commit (PaxosCommit) returns (Empty);
+  rpc Commit (PaxosCommit) returns (PaxosCommitResponse);
 
 }
 
