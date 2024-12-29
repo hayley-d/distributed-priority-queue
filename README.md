@@ -3,7 +3,7 @@
 # Distributed Priority Queue
 A scalable, distributed priority queue system designed to efficiently handle high-concurrency workloads. This project highlights key concepts in distributed systems, fault tolerance, and load balancing, drawing inspiration from real-world applications like Facebook's priority queue.
 
-![Figure 1](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---b49JFbaO0b-CirInxPH_8---figure---ts0fckGEDmK8D0sQ9NRoyw.png "Figure 1")
+![Figure 1](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---OD_Aig0PWBMFDbGUV70uh---figure---ts0fckGEDmK8D0sQ9NRoyw.png "Figure 1")
 
 ## Features
 ### Protocol Buffers and gRPC
@@ -76,7 +76,24 @@ The system consists of four main components, each with distinct responsibilities
 - **Role**: The consumer pulls jobs from the distributed queue, processes them, and acknowledges their completion.
 - **Functionality**:
     - Uses long-polling to efficiently wait for and fetch jobs, ensuring resources are not wasted while waiting for tasks.
-![Figure 2](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---SswZMbVXSjJXjbZHvewh_---figure---5txp8ax3V7Fd65uKuRSIaA.png "Figure 2")
+![Figure 2](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---OGT1FanLWf5sVNcTK3HCW---figure---5txp8ax3V7Fd65uKuRSIaA.png "Figure 2")
+
+
+
+## References
+[﻿FOQS scaling a distributed priority queue](https://engineering.fb.com/2021/02/22/production-engineering/foqs-scaling-a-distributed-priority-queue/) 
+
+[﻿Distributed Priority Queue | Systems Design](https://www.youtube.com/watch?v=PFsjVT-XwmA) 
+
+[﻿Stackoverflow-question](https://stackoverflow.com/questions/6393135/how-to-prevent-low-priority-messages-on-an-activemq-prioritized-queue-from-being) 
+
+[﻿round-robin-scheduling](https://www.guru99.com/round-robin-scheduling-example.html) 
+
+[﻿priority queues](https://towardsdatascience.com/course-2-data-structure-part-2-priority-queues-and-disjoint-set-ed11a0383011) 
+
+[﻿leader-follower replication](https://www.educative.io/answers/leader-and-follower-replication) 
+
+[﻿quorum in distributed systems](https://www.educative.io/answers/what-is-quorum-in-distributed-systems) 
 
 
 
