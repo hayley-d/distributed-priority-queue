@@ -7,6 +7,7 @@ use crate::node_state::NodeState;
 use log::error;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use tonic::Code;
 use tonic::{transport::Server, Request, Response, Status};
 
 pub struct LocalJobService {
@@ -137,6 +138,33 @@ impl JobService for LocalJobService {
         &self,
         request: Request<JobRequest>,
     ) -> Result<Response<JobResponse>, Status> {
-        todo!()
+        let job_id = request.into_inner().job_id;
+        let client = self.node_state.lock().await;
+
+        let query = client
+            .db
+            .prepare("SELECT * FROM jobs WHERE job_id = $1")
+            .await
+            .map_err(|_| {
+                error!("Error: Failed to create SELECT query");
+                Status::new(Code::Internal, format!("Error creating query"))
+            })?;
+
+        let row = client
+            .db
+            .query_one(&query, &[&(job_id)])
+            .await
+            .map_err(|_| {
+                error!("Error: Attempt to SELECT from database failed");
+                Status::new(Code::Internal, format!("Failed to run SELECT query."))
+            })?;
+
+        return Ok(Response::new(JobResponse {
+            job: Some(Job {
+                job_id: row.get(0),
+                priority: row.get(1),
+                payload: row.get(2),
+            }),
+        }));
     }
 }

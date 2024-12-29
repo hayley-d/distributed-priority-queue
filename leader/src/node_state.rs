@@ -49,7 +49,7 @@ impl NodeState {
     }
 
     pub async fn insert_job(&mut self, priority: u32, payload: Vec<u8>) -> Result<u64, Status> {
-        let query = self
+        let query = &self
             .db
             .prepare("INSERT INTO jobs (priority, payload) VALUES ($1,$2) RETURNING job_id")
             .await
@@ -58,7 +58,7 @@ impl NodeState {
                 return Status::new(Code::Internal, format!("Failed to create INSERT query"));
             });
 
-        let row = self
+        let row = &self
             .db
             .query_one(&query, &[&priority, &payload])
             .await

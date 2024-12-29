@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
-use leader::api::{dequeue, dequeue_amount};
 use leader::grpc::LocalJobService;
+use leader::job_management::job_service_server::JobServiceServer;
 use leader::node_state::NodeState;
 use tokio::sync::Mutex;
+use tonic::transport::Server;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
