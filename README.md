@@ -3,7 +3,7 @@
 # Distributed Priority Queue
 A scalable, distributed priority queue system designed to efficiently handle high-concurrency workloads. This project highlights key concepts in distributed systems, fault tolerance, and load balancing, drawing inspiration from real-world applications like Facebook's priority queue.
 
-![Figure 1](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---gpRqeiFVA5GRW4NpI5ln4---figure---ts0fckGEDmK8D0sQ9NRoyw.png "Figure 1")
+![Figure 1](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---b49JFbaO0b-CirInxPH_8---figure---ts0fckGEDmK8D0sQ9NRoyw.png "Figure 1")
 
 ## Features
 ### Protocol Buffers and gRPC
@@ -76,7 +76,7 @@ The system consists of four main components, each with distinct responsibilities
 - **Role**: The consumer pulls jobs from the distributed queue, processes them, and acknowledges their completion.
 - **Functionality**:
     - Uses long-polling to efficiently wait for and fetch jobs, ensuring resources are not wasted while waiting for tasks.
-![Figure 2](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---N3dwSOZEWjwFFLoqasFyR---figure---5txp8ax3V7Fd65uKuRSIaA.png "Figure 2")
+![Figure 2](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---SswZMbVXSjJXjbZHvewh_---figure---5txp8ax3V7Fd65uKuRSIaA.png "Figure 2")
 
 
 
