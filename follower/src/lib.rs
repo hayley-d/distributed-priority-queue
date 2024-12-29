@@ -4,4 +4,3 @@ pub mod error;
 pub mod grpc;
 pub mod job_management;
 pub mod min_heap;
-pub mod request_logger;

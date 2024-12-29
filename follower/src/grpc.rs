@@ -3,7 +3,7 @@ use crate::job_management::{
     Job, PaxosAccept, PaxosCommit, PaxosCommitResponse, PaxosPrepare, PaxosPromise, PaxosPropose,
 };
 use crate::min_heap::MinHeap;
-use log::error;
+use log::{error, info};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
@@ -19,6 +19,20 @@ pub struct PaxosState {
 
 impl PaxosState {
     pub fn new() -> Self {
+        log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
+        let node_id: u64 = match std::env::args().collect::<Vec<String>>().get(1) {
+            Some(id) => match id.parse::<u64>() {
+                Ok(i) => i,
+                Err(_) => {
+                    error!("Failed to parse node id: Node id must be of type u64");
+                    std::process::exit(1);
+                }
+            },
+            None => {
+                error!("No node id provided in command line arguments: could not start node");
+                std::process::exit(1);
+            }
+        };
         PaxosState {
             promised_proposal: 0,
             accepted_proposal: 0,
@@ -48,6 +62,10 @@ impl PaxosService for LocalPaxosService {
     ) -> Result<Response<PaxosPromise>, Status> {
         let mut state = self.state.lock().await;
         let prepare = request.into_inner();
+        info!(
+            "Paxos Prepare recieved with proposal number {}",
+            prepare.proposal_number
+        );
 
         if prepare.proposal_number >= state.promised_proposal {
             state.promised_proposal = prepare.proposal_number;
@@ -73,6 +91,10 @@ impl PaxosService for LocalPaxosService {
     ) -> Result<Response<PaxosAccept>, Status> {
         let mut state = self.state.lock().await;
         let propose = request.into_inner();
+        info!(
+            "Paxos Proposal recieved with proposal number {}",
+            propose.proposal_number
+        );
 
         if propose.proposal_number >= state.promised_proposal {
             state.accepted_proposal = propose.proposal_number;
@@ -102,6 +124,14 @@ impl PaxosService for LocalPaxosService {
     ) -> Result<Response<PaxosCommitResponse>, Status> {
         let mut state = self.state.lock().await;
         let commit = &request.into_inner();
+        info!(
+            "Paxos Commit recieved with proposal number {} and status {}",
+            commit.proposal_number,
+            match commit.commit {
+                true => "success",
+                _ => "failed",
+            }
+        );
 
         let time = state.increment_time();
         if commit.commit {
