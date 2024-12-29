@@ -2,6 +2,7 @@ use crate::job_management::paxos_service_server::PaxosService;
 use crate::job_management::{
     Job, PaxosAccept, PaxosCommit, PaxosCommitResponse, PaxosPrepare, PaxosPromise, PaxosPropose,
 };
+use crate::min_heap::MinHeap;
 use log::error;
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -12,6 +13,8 @@ pub struct PaxosState {
     pub promised_proposal: i32,
     pub accepted_proposal: i32,
     pub accepted_value: Option<Job>,
+    pub queue: MinHeap,
+    pub lamport_timestamp: u64,
 }
 
 impl PaxosState {
@@ -20,7 +23,15 @@ impl PaxosState {
             promised_proposal: 0,
             accepted_proposal: 0,
             accepted_value: None,
+            queue: MinHeap::new(0.5),
+            lamport_timestamp: 0,
         }
+    }
+
+    pub fn increment_time(&mut self) -> u64 {
+        let temp = self.lamport_timestamp;
+        self.lamport_timestamp += 1;
+        return temp;
     }
 }
 
@@ -92,15 +103,24 @@ impl PaxosService for LocalPaxosService {
         let mut state = self.state.lock().await;
         let commit = &request.into_inner();
 
+        let time = state.increment_time();
         if commit.commit {
-            if let Some(_) = &state.accepted_value {
-                state.accepted_value = None;
-                Ok(Response::new(PaxosCommitResponse {
-                    proposal_number: commit.proposal_number,
-                }))
-            } else {
-                error!("Failed Paxos commit: no accpeted value to commit");
-                Err(Status::failed_precondition("No accepted value to commit."))
+            let job: Option<Job> = state.accepted_value.clone();
+            match job {
+                Some(job) => {
+                    state
+                        .queue
+                        .insert(job.priority as u32, job.job_id as u64, time);
+                    state.accepted_value = None;
+
+                    Ok(Response::new(PaxosCommitResponse {
+                        proposal_number: commit.proposal_number,
+                    }))
+                }
+                None => {
+                    error!("Failed Paxos commit: no accpeted value to commit");
+                    Err(Status::failed_precondition("No accepted value to commit."))
+                }
             }
         } else {
             error!("Failed Paxos commit: commit falg is false");
