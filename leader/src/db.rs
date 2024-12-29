@@ -1,17 +1,22 @@
-use crate::error::ApiError;
 use dotenv::dotenv;
 use rocket::tokio;
 use std::env;
 use tokio_postgres::{Client, NoTls};
+use tonic::{Code, Status};
 
-pub async fn connect_to_db() -> Result<Client, ApiError> {
+pub async fn connect_to_db() -> Result<Client, Status> {
     dotenv().ok();
     let database_url = env::var("DATABASE_URL")
-        .map_err(|_| ApiError::DatabaseError(format!("Incorrect Connection String")))?;
+        .map_err(|_| Status::new(Code::Internal, format!("Incorrect Connection String")))?;
 
     let (client, connection) = tokio_postgres::connect(&database_url, NoTls)
         .await
-        .map_err(|e| ApiError::DatabaseError(e.to_string()))?;
+        .map_err(|_| {
+            Status::new(
+                Code::Internal,
+                format!("Failed to conntect to the database"),
+            )
+        })?;
 
     tokio::spawn(async move { connection.await });
 

@@ -22,10 +22,7 @@ impl LocalJobService {
 #[tonic::async_trait]
 impl JobService for LocalJobService {
     // EnqueueJob RPC method
-    async fn enqueue_job(
-        &self,
-        request: Request<EnqueueRequest>,
-    ) -> Result<Response<JobResponse>, Status> {
+    async fn enqueue_job(&self, request: Request<EnqueueRequest>) -> Result<Response<Job>, Status> {
         let enqueue_request = request.into_inner();
         let priority = enqueue_request.priority;
         let payload = enqueue_request.payload;
@@ -36,7 +33,9 @@ impl JobService for LocalJobService {
         let mut responses = Vec::new();
 
         for follower in &self.node_state.lock().await.followers {
-            let mut client = PaxosServiceClient::connect(follower).await.unwrap();
+            let mut client = PaxosServiceClient::connect(follower.to_string())
+                .await
+                .unwrap();
             let response = client.prepare(paxos_prepare.clone()).await;
             responses.push(response);
         }
@@ -64,7 +63,7 @@ impl JobService for LocalJobService {
             .node_state
             .lock()
             .await
-            .insert_job(priority as u32, payload)
+            .insert_job(priority as u32, payload.clone())
             .await? as i64;
 
         let paxos_propose = PaxosPropose {
@@ -78,7 +77,9 @@ impl JobService for LocalJobService {
 
         let mut responses = Vec::new();
         for follower in &self.node_state.lock().await.followers {
-            let mut client = PaxosServiceClient::connect(follower).await.unwrap();
+            let mut client = PaxosServiceClient::connect(follower.to_string())
+                .await
+                .unwrap();
             let response = client.propose(paxos_propose.clone()).await;
             responses.push(response);
         }
@@ -107,20 +108,20 @@ impl JobService for LocalJobService {
         };
 
         let mut responses = Vec::new();
-        for follower in self.node_state.lock().await.followers {
-            let mut client = PaxosServiceClient::connect(follower).await.unwrap();
+        for follower in &self.node_state.lock().await.followers {
+            let mut client = PaxosServiceClient::connect(follower.to_string())
+                .await
+                .unwrap();
             let response = client.commit(paxos_commit.clone()).await;
             responses.push(response);
         }
 
         for response in responses {
             if let Ok(_) = response {
-                return Ok(Response::new(JobResponse {
-                    job: Some(Job {
-                        job_id: job_id as i64,
-                        priority,
-                        payload,
-                    }),
+                return Ok(Response::new(Job {
+                    job_id: job_id as i64,
+                    priority,
+                    payload,
                 }));
             }
         }
