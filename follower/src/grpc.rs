@@ -1,6 +1,8 @@
+use crate::job_management::paxos_service_server::PaxosService;
 use crate::job_management::{
-    PaxosAccept, PaxosCommit, PaxosPrepare, PaxosPromise, PaxosPropose, PaxosService,
+    Job, PaxosAccept, PaxosCommit, PaxosCommitResponse, PaxosPrepare, PaxosPromise, PaxosPropose,
 };
+use log::error;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
@@ -9,7 +11,7 @@ use tonic::{Request, Response, Status};
 pub struct PaxosState {
     pub promised_proposal: i32,
     pub accepted_proposal: i32,
-    pub accepted_value: Option<Job>, // Holds the accepted job (if any)
+    pub accepted_value: Option<Job>,
 }
 
 impl PaxosState {
@@ -23,12 +25,12 @@ impl PaxosState {
 }
 
 #[derive(Debug)]
-pub struct PaxosServiceImpl {
-    pub state: Arc<Mutex<PaxosState>>, // Shared state for Paxos
+pub struct LocalPaxosService {
+    pub state: Arc<Mutex<PaxosState>>,
 }
 
 #[tonic::async_trait]
-impl PaxosService for PaxosServiceImpl {
+impl PaxosService for LocalPaxosService {
     async fn prepare(
         &self,
         request: Request<PaxosPrepare>,
@@ -36,10 +38,10 @@ impl PaxosService for PaxosServiceImpl {
         let mut state = self.state.lock().await;
         let prepare = request.into_inner();
 
-        // Check if the proposal number is greater than or equal to the promised proposal number
         if prepare.proposal_number >= state.promised_proposal {
             state.promised_proposal = prepare.proposal_number;
             Ok(Response::new(PaxosPromise {
+                proposal_number: prepare.proposal_number,
                 accepted_value: state
                     .accepted_value
                     .as_ref()
@@ -47,6 +49,7 @@ impl PaxosService for PaxosServiceImpl {
                     .unwrap_or(0),
             }))
         } else {
+            error!("Failed Paxos proposal: number was less than promised");
             Err(Status::failed_precondition(
                 "Proposal number is less than promised.",
             ))
@@ -60,34 +63,47 @@ impl PaxosService for PaxosServiceImpl {
         let mut state = self.state.lock().await;
         let propose = request.into_inner();
 
-        // Accept the proposal if the proposal number matches the promised proposal number
         if propose.proposal_number >= state.promised_proposal {
             state.accepted_proposal = propose.proposal_number;
-            state.accepted_value = Some(propose.proposed_job.clone());
-            Ok(Response::new(PaxosAccept { accepted: true }))
+            state.accepted_value = match propose.proposed_job {
+                Some(job) => Some(job.clone()),
+                None => {
+                    error!("Failed proposal: no job provided in proposal");
+                    return Err(Status::internal("No job provided in proposal"));
+                }
+            };
+
+            Ok(Response::new(PaxosAccept {
+                proposal_number: propose.proposal_number,
+                accepted: true,
+            }))
         } else {
+            error!("Failed Paxos proposal: proposal number was less than promised");
             Err(Status::failed_precondition(
                 "Proposal number is less than promised.",
             ))
         }
     }
 
-    async fn commit(&self, request: Request<PaxosCommit>) -> Result<Response<()>, Status> {
+    async fn commit(
+        &self,
+        request: Request<PaxosCommit>,
+    ) -> Result<Response<PaxosCommitResponse>, Status> {
         let mut state = self.state.lock().await;
-        let commit = request.into_inner();
+        let commit = &request.into_inner();
 
-        // Commit the accepted value if the commit is true
         if commit.commit {
-            if let Some(job) = &state.accepted_value {
-                // Simulate storing the job in a database
-                println!("Committing job: {:?}", job);
-                // You could add actual database logic here
-                state.accepted_value = None; // Clear the accepted value after commit
-                Ok(Response::new(()))
+            if let Some(_) = &state.accepted_value {
+                state.accepted_value = None;
+                Ok(Response::new(PaxosCommitResponse {
+                    proposal_number: commit.proposal_number,
+                }))
             } else {
+                error!("Failed Paxos commit: no accpeted value to commit");
                 Err(Status::failed_precondition("No accepted value to commit."))
             }
         } else {
+            error!("Failed Paxos commit: commit falg is false");
             Err(Status::failed_precondition("Commit flag is false."))
         }
     }
