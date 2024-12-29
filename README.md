@@ -3,7 +3,7 @@
 # Distributed Priority Queue
 A scalable, distributed priority queue system designed to efficiently handle high-concurrency workloads. This project highlights key concepts in distributed systems, fault tolerance, and load balancing, drawing inspiration from real-world applications like Facebook's priority queue.
 
-![Figure 1](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---OD_Aig0PWBMFDbGUV70uh---figure---ts0fckGEDmK8D0sQ9NRoyw.png "Figure 1")
+![Figure 1](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---KoCYMlA0OxAEsrqqdAZji---figure---ts0fckGEDmK8D0sQ9NRoyw.png "Figure 1")
 
 ## Features
 ### Protocol Buffers and gRPC
@@ -76,24 +76,24 @@ The system consists of four main components, each with distinct responsibilities
 - **Role**: The consumer pulls jobs from the distributed queue, processes them, and acknowledges their completion.
 - **Functionality**:
     - Uses long-polling to efficiently wait for and fetch jobs, ensuring resources are not wasted while waiting for tasks.
-![Figure 2](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---OGT1FanLWf5sVNcTK3HCW---figure---5txp8ax3V7Fd65uKuRSIaA.png "Figure 2")
+![Figure 2](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---YPP15YfllEX9X_-BeUU1w---figure---5txp8ax3V7Fd65uKuRSIaA.png "Figure 2")
 
 
 
 ## References
-[﻿FOQS scaling a distributed priority queue](https://engineering.fb.com/2021/02/22/production-engineering/foqs-scaling-a-distributed-priority-queue/) 
+**Facebook Engineering** (2021) _FOQS scaling a distributed priority queue_. Available at: [﻿https://engineering.fb.com/2021/02/22/production-engineering/foqs-scaling-a-distributed-priority-queue/](https://engineering.fb.com/2021/02/22/production-engineering/foqs-scaling-a-distributed-priority-queue/) (Accessed: 15 December 2024).
 
-[﻿Distributed Priority Queue | Systems Design](https://www.youtube.com/watch?v=PFsjVT-XwmA) 
+**Jordan has no life** (2020) 31: Distributed Priority Queue | Systems Design Interview Questions With Ex-Google SWE [YouTube]. Available at: [﻿https://www.youtube.com/watch?v=PFsjVT-XwmA](https://www.youtube.com/watch?v=PFsjVT-XwmA) (Accessed: 15 December 2024).
 
-[﻿Stackoverflow-question](https://stackoverflow.com/questions/6393135/how-to-prevent-low-priority-messages-on-an-activemq-prioritized-queue-from-being) 
+**Stack Overflow** (2011) _How to prevent low-priority messages on an ActiveMQ prioritized queue from being consumed indefinitely?_. Available at: [﻿https://stackoverflow.com/questions/6393135/how-to-prevent-low-priority-messages-on-an-activemq-prioritized-queue-from-being](https://stackoverflow.com/questions/6393135/how-to-prevent-low-priority-messages-on-an-activemq-prioritized-queue-from-being) (Accessed: 20 December 2024).
 
-[﻿round-robin-scheduling](https://www.guru99.com/round-robin-scheduling-example.html) 
+**Guru99** (2021) _Round-robin scheduling example_. Available at: [﻿https://www.guru99.com/round-robin-scheduling-example.html](https://www.guru99.com/round-robin-scheduling-example.html) (Accessed: 20 December 2024).
 
-[﻿priority queues](https://towardsdatascience.com/course-2-data-structure-part-2-priority-queues-and-disjoint-set-ed11a0383011) 
+**Towards Data Science** (2020) _Priority queues_. Available at: [﻿https://towardsdatascience.com/course-2-data-structure-part-2-priority-queues-and-disjoint-set-ed11a0383011](https://towardsdatascience.com/course-2-data-structure-part-2-priority-queues-and-disjoint-set-ed11a0383011) (Accessed: 20 December 2024).
 
-[﻿leader-follower replication](https://www.educative.io/answers/leader-and-follower-replication) 
+**Educative** (n.d.) _Leader and follower replication_. Available at: [﻿https://www.educative.io/answers/leader-and-follower-replication](https://www.educative.io/answers/leader-and-follower-replication) (Accessed: 21 December 2024).
 
-[﻿quorum in distributed systems](https://www.educative.io/answers/what-is-quorum-in-distributed-systems) 
+**Educative** (n.d.) _What is quorum in distributed systems_. Available at: [﻿https://www.educative.io/answers/what-is-quorum-in-distributed-systems](https://www.educative.io/answers/what-is-quorum-in-distributed-systems) (Accessed: 21 December 2024).
 
 
 
