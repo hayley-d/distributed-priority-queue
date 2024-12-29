@@ -3,7 +3,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::job_management::long_polling_service_client::LongPollingServiceClient;
-use crate::job_management::{Job, PollJobRequest};
+use crate::job_management::{Job, PollJobRequest, PollJobResponse};
 use crate::min_heap::MinHeap;
 
 pub struct ConsumerState {
@@ -11,7 +11,7 @@ pub struct ConsumerState {
     nodes: Vec<String>,
     heap: MinHeap,
     lamport_timestamp: i64,
-    timeout: i32
+    timeout: i32,
 }
 
 impl ConsumerState {
@@ -34,18 +34,25 @@ impl ConsumerState {
             None => 5,
         };
 
-
         return Arc::new(Mutex::new(ConsumerState {
             consumer_id,
             nodes,
             heap: MinHeap::new(0.5),
             lamport_timestamp: 0,
-            timeout
+            timeout,
         }));
     }
 
     pub fn insert_job(&mut self, job: Job) {
-        todo!()
+        let time: i64 = self.increment_time();
+        self.heap
+            .insert(job.priority as u32, job.job_id as u64, time as u64);
+    }
+
+    fn increment_time(&mut self) -> i64 {
+        let temp = self.lamport_timestamp;
+        self.lamport_timestamp += 1;
+        return temp;
     }
 }
 
@@ -54,40 +61,43 @@ pub struct LocalLongPollService {
 }
 
 impl LocalLongPollService {
-    pub async fn get_job(&mut self) {
-        let gaurd = &self.consumer_state.lock().await;
+    pub async fn get_jobs(&mut self) {
+        let gaurd = &mut self.consumer_state.lock().await;
 
-        let request : PollJobRequest {
+        let request: PollJobRequest = PollJobRequest {
             consumer_id: gaurd.consumer_id,
-            timeout_seconds: gaurd.timeout
-        }
+            timeout_seconds: gaurd.timeout,
+        };
+
         let mut responses = Vec::new();
 
         for node in &gaurd.nodes {
             let mut client = LongPollingServiceClient::connect(node.to_string())
                 .await
                 .unwrap();
-            let response = client.poll(paxos_prepare.clone()).await;
+            let response = client.poll(request.clone()).await;
             responses.push(response);
         }
 
-        // Check the first successful PaxosPromise response
-        let mut paxos_promise = None;
         for response in responses {
-            if let Ok(promise) = response {
-                if promise.get_ref().accepted_value == 1 {
-                    paxos_promise = Some(promise);
-                    break;
-                }
-            }
-        }
+            match response {
+                Ok(res) => {
+                    let res = res.into_inner().clone();
+                    let (success, option_job) = (&res.success.clone(), &res.job.clone());
 
-        if paxos_promise.is_none() {
-            error!(
-                "Paxos prepared failed with proposal number = {}",
-                proposal_number
-            );
-            return Err(Status::internal("Paxos prepared failed"));
+                    if *success {
+                        let job = match option_job {
+                            Some(job) => job,
+                            None => continue,
+                        };
+
+                        gaurd.insert_job(job.clone());
+                    } else {
+                        continue;
+                    }
+                }
+                Err(_) => continue,
+            }
         }
     }
 }
