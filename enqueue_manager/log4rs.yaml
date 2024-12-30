@@ -10,9 +10,9 @@ appenders:
     encoder:
       pattern: "{d(%Y-%m-%d %H:%M:%S%.3f)} [{l}] {T} {f}:{L} - {m}{n}"
 
-  request_file:
+  grpc_request_file:
     kind: file
-    path: "request.log"
+    path: "grpc_request.log"
     encoder:
       pattern: "{d(%Y-%m-%d %H:%M:%S%.3f)} [{l}] {T} {f}:{L} - {m}{n}"
 
@@ -31,6 +31,6 @@ loggers:
   request_logger:
     level: info
     appenders:
-      - request_file
+      - grpc_request_file
     additive: false
 
