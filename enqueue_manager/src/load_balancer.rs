@@ -6,8 +6,9 @@ mod load_balancer {
     use tokio::time::{timeout, Duration};
     use tonic::transport::Channel;
 
+    use crate::job_management::job_service_client::JobServiceClient;
     use crate::job_management::node_health_service_client::NodeHealthServiceClient;
-    use crate::job_management::{EnqueueRequest, NodeHealthRequest};
+    use crate::job_management::{EnqueueRequest, Job, NodeHealthRequest};
 
     pub struct Node {
         address: String,
@@ -195,11 +196,6 @@ mod load_balancer {
             let mut client: NodeHealthServiceClient<Channel> =
                 NodeHealthServiceClient::connect(address.clone()).await?;
 
-            error!(
-                "Failed to estblish connection to Node Health Service Client through address {}",
-                address
-            );
-
             let response = match timeout(
                 Duration::from_millis(10),
                 client.get_node_health(request.clone()),
@@ -242,6 +238,58 @@ mod load_balancer {
                     return Err(Box::new(RpcError::FailedRequest));
                 }
             }
+        }
+
+        pub async fn distribute(&mut self) -> Result<Job, Box<dyn std::error::Error + 'static>> {
+            let number_jobs: usize = self.nodes.len();
+
+            for node in &self.nodes {
+                let my_jobs: i32 = (number_jobs as f32 * node.weight).floor() as i32;
+                for _ in 0..my_jobs {
+                    let enqueue_request: EnqueueRequest = match self.buffer.pop_front() {
+                        Some(r) => r,
+                        None => {
+                            error!("Buffer is empty");
+                            return Err(Box::new(RpcError::FailedRequest));
+                        }
+                    };
+
+                    info!("Job Service Request to address {}", node.address);
+
+                    let mut client: JobServiceClient<Channel> =
+                        JobServiceClient::connect(node.address.clone()).await?;
+
+                    let response = match timeout(
+                        Duration::from_millis(10),
+                        client.enqueue_job(enqueue_request),
+                    )
+                    .await
+                    {
+                        Ok(value) => value,
+                        Err(_) => {
+                            error!(
+                                "Failed to get response from node at {} request timeout",
+                                node.address
+                            );
+                            return Err(Box::new(RpcError::FailedRequest));
+                        }
+                    };
+
+                    match response {
+                        Ok(res) => {
+                            return Ok(res.into_inner());
+                        }
+                        Err(_) => {
+                            error!(
+                                "Failed to obtain enqueue response from node at {}",
+                                node.address
+                            );
+                            return Err(Box::new(RpcError::FailedRequest));
+                        }
+                    }
+                }
+            }
+            todo!()
         }
     }
 
