@@ -1,8 +1,8 @@
 mod load_balancer {
-    use std::collections::VecDeque;
-    use std::error::Error;
-
     use log::{error, info};
+    use std::collections::VecDeque;
+    use std::error::Error as anyhowErr;
+    use std::fmt::Display;
     use thiserror::Error as thisError;
     use tonic::transport::Channel;
 
@@ -50,33 +50,36 @@ mod load_balancer {
     }
 
     impl LoadBalancer {
-        pub fn new(available_nodes: u32, addresses: Vec<String>) -> Self {
+        pub async fn new(
+            available_nodes: u32,
+            addresses: Vec<String>,
+        ) -> Result<Self, Box<dyn std::error::Error + 'static>> {
             let mut nodes: Vec<Node> = Vec::with_capacity(available_nodes as usize);
 
             for address in addresses {
-                let weight: f32 = Self::get_weight(&address);
+                let weight: f32 = Self::get_weight(&address).await?;
                 let node: Node = Node::new(address, weight);
                 nodes.push(node);
             }
 
             nodes.sort_by(|a, b| b.cmp(&a));
 
-            return LoadBalancer {
+            return Ok(LoadBalancer {
                 buffer: VecDeque::new(),
                 nodes,
                 available_nodes,
-            };
+            });
         }
 
         /// Calculates the weight of the leader
-        async fn get_weight(address: &String) -> Result<f32, Box<dyn Error + 'static>> {
+        async fn get_weight(address: &String) -> Result<f32, Box<dyn std::error::Error + 'static>> {
             let request: NodeHealthRequest = NodeHealthRequest {};
 
             // log gRPC request
             info!("NodeHealthService Request to address {}", address);
 
             let mut client: NodeHealthServiceClient<Channel> =
-                NodeHealthServiceClient::connect(address.into()).await?;
+                NodeHealthServiceClient::connect(address.clone()).await?;
 
             error!(
                 "Failed to estblish connection to Node Health Service Client through address {}",
@@ -88,7 +91,7 @@ mod load_balancer {
             match response {
                 Ok(res) => {
                     let res = res.into_inner().clone();
-                    let (cpu_utilization, memory_usage, queue_depth, response_time) = (
+                    let (cpu_utilization, memory_usage, queue_depth, _) = (
                         &res.cpu_utilization,
                         &res.memory_usage,
                         &res.queue_depth,
@@ -108,9 +111,22 @@ mod load_balancer {
                         "Failed to obtain node health status from node at {}",
                         address
                     );
-                    Err()
+                    return Err(Box::new(RpcError::FailedRequest));
                 }
             }
+        }
+    }
+
+    #[derive(Debug)]
+    pub enum RpcError {
+        FailedRequest,
+    }
+
+    impl std::error::Error for RpcError {}
+
+    impl Display for RpcError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "gRPC error")
         }
     }
 }
