@@ -12,16 +12,17 @@ pub struct ManagerState {
 impl ManagerState {
     pub fn new(leaders: Vec<String>) -> Arc<Mutex<Self>> {
         log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
+
         let manager_id: i32 = match std::env::args().collect::<Vec<String>>().get(1) {
             Some(id) => match id.parse::<i32>() {
                 Ok(i) => i,
                 Err(_) => {
-                    error!("Failed to parse node id: Node id must be of type u64");
+                    error!("Failed to parse manager id: Manager id must be of type u64");
                     std::process::exit(1);
                 }
             },
             None => {
-                error!("No node id provided in command line arguments: could not start node");
+                error!("No manager id provided in command line arguments: could not start server");
                 std::process::exit(1);
             }
         };

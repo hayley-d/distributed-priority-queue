@@ -1,27 +1,20 @@
 mod load_balancer {
-    use crate::buffer::Buffer;
+    use std::collections::VecDeque;
 
-    const WEIGHT_1: f32 = 0.3;
-    const WIEGHT_2: f32 = 0.25;
-    const WEIGHT_3: f32 = 0.20;
-    const WEIGHT_4: f32 = 0.15;
-    const WEIGHT_5: f32 = 0.10;
+    use crate::job_management::EnqueueRequest;
 
     pub struct LoadBalancer {
-        buffers: Vec<Buffer>,
-        weights: Vec<f32>,
+        buffer: VecDeque<EnqueueRequest>,
+        weights: Vec<(String, f32)>,
         available_leaders: u32,
     }
 
     impl LoadBalancer {
-        pub fn new(available_leaders: u32) -> Self {
-            let weights: Vec<f32> = Vec::with_capacity(available_leaders as usize);
-            let buffers: Vec<Buffer> = vec![];
-            for _ in 0..5 {
-                buffers.push(Buffer::new());
-            }
+        pub fn new(available_leaders: u32, leaders: Vec<String>) -> Self {
+            let weights: Vec<(String, f32)> = Vec::with_capacity(available_leaders as usize);
+
             return LoadBalancer {
-                buffers,
+                buffer: VecDeque::new(),
                 weights,
                 available_leaders,
             };
