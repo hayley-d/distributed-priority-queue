@@ -1,7 +1,10 @@
 mod load_balancer {
     use std::collections::VecDeque;
 
-    use crate::job_management::EnqueueRequest;
+    use log::{error, info};
+
+    use crate::job_management::node_health_service_client::NodeHealthServiceClient;
+    use crate::job_management::{EnqueueRequest, NodeHealthRequest};
 
     pub struct Node {
         address: String,
@@ -63,7 +66,41 @@ mod load_balancer {
         }
 
         /// Calculates the weight of the leader
-        fn get_weight(address: &String) -> f32 {
+        async fn get_weight(address: &String) -> f32 {
+            let request: NodeHealthRequest = NodeHealthRequest {};
+
+            // log gRPC request
+            info!("NodeHealthService Request to address {}", address);
+
+            let mut client = NodeHealthServiceClient::connect(address.into())
+                .await
+                .unwrap();
+            let response = client.get_node_health(request.clone()).await;
+
+            match response {
+                Ok(res) => {
+                    let res = res.into_inner().clone();
+                    let (cpu_utilization, memory_usage, queue_depth, response_time) = (
+                        &res.cpu_utilization,
+                        &res.memory_usage,
+                        &res.queue_depth,
+                        &res.response_time,
+                    );
+
+                    let weight: f32 = (((1.0 - cpu_utilization) / 100.0)
+                        * ((1.0 - memory_usage) / 100.0)
+                        * ((1.0 - (*queue_depth as f32)) / 100.0))
+                        .round()
+                        / 100.0;
+                }
+                Err(_) => {
+                    error!(
+                        "Failed to obtain node health status from node at {}",
+                        address
+                    );
+                }
+            }
+
             todo!()
         }
     }
