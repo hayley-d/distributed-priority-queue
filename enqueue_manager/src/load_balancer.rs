@@ -50,13 +50,25 @@ mod load_balancer {
 
     impl LoadBalancer {
         pub async fn new(
-            available_nodes: u32,
-            addresses: Vec<String>,
+            mut available_nodes: u32,
+            addresses: &mut Vec<String>,
         ) -> Result<Self, Box<dyn std::error::Error + 'static>> {
             let mut nodes: Vec<Node> = Vec::with_capacity(available_nodes as usize);
             let mut weights: Vec<f32> = Vec::with_capacity(available_nodes as usize);
-            for address in &addresses {
-                let weight: f32 = Self::get_weight(&address).await?;
+            for (i, address) in addresses.clone().iter().enumerate() {
+                let weight: f32 = match Self::get_weight(&address).await {
+                    Ok(w) => w,
+                    Err(_) => {
+                        error!(
+                            "Failed to get response for node health from address: {}",
+                            address
+                        );
+
+                        available_nodes = available_nodes - 1;
+                        addresses.remove(i);
+                        continue;
+                    }
+                };
                 weights.push(weight);
             }
             let total_weight: f32 = weights.iter().sum();
