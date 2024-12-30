@@ -14,8 +14,8 @@ A scalable, distributed priority queue system designed to efficiently handle hig
 ### Leader-Follower Pattern with Quorum-Based Replication
 - **Leader-Follower Model**: A leader node handles write operations, while follower nodes replicate data for fault tolerance.
 - **Quorum-Based Approach**: Requires a majority of nodes to acknowledge a change before it’s considered committed, ensuring data consistency.
-### Round-Robin Load Balancer with Weighted Priorities
-- A **Dynamic Load Balancer** a gRPC-based weighted round-robin load balancer that dynamically adjusts node weights using real-time health metrics such as CPU usage, queue depth, and task processing rates.
+### Dynamic Load Balancer 
+- A **gRPC-based weighted round-robin load balancer**  that dynamically adjusts node weights using real-time health metrics such as CPU usage, queue depth, and task processing rates.
 
 ### Long Polling with Pull Model for Consumers
 - **Long Polling** allows consumers to pull jobs from the queue only when they are available, optimizing resource usage and reducing idle time.
