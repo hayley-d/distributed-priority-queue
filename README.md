@@ -15,13 +15,8 @@ A scalable, distributed priority queue system designed to efficiently handle hig
 - **Leader-Follower Model**: A leader node handles write operations, while follower nodes replicate data for fault tolerance.
 - **Quorum-Based Approach**: Requires a majority of nodes to acknowledge a change before it’s considered committed, ensuring data consistency.
 ### Round-Robin Load Balancer with Weighted Priorities
-- A **Round-Robin Load Balancer** distributes tasks evenly across nodes while respecting job priority.
-- **Weighted Priorities** ensure that tasks are scheduled according to their importance:
-    - Priority 1: 30% of scheduling time
-    - Priority 2: 25% of scheduling time
-    - Priority 3: 20% of scheduling time
-    - Priority 4: 15% of scheduling time
-    - Priority 5: 10% of scheduling time
+- A **Dynamic Load Balancer** a gRPC-based weighted round-robin load balancer that dynamically adjusts node weights using real-time health metrics such as CPU usage, queue depth, and task processing rates.
+
 ### Long Polling with Pull Model for Consumers
 - **Long Polling** allows consumers to pull jobs from the queue only when they are available, optimizing resource usage and reducing idle time.
 - **Pull Model** ensures that consumers only retrieve jobs when needed, improving overall efficiency.
