@@ -3,6 +3,7 @@ mod load_balancer {
     use log::{error, info};
     use std::collections::VecDeque;
     use std::fmt::Display;
+    use tokio::time::{timeout, Duration};
     use tonic::transport::Channel;
 
     use crate::job_management::node_health_service_client::NodeHealthServiceClient;
@@ -46,9 +47,16 @@ mod load_balancer {
         buffer: VecDeque<EnqueueRequest>,
         nodes: Vec<Node>,
         available_nodes: u32,
+        lamport_timestamp: u64,
     }
 
     impl LoadBalancer {
+        pub fn increment_time(&mut self) -> u64 {
+            let temp = self.lamport_timestamp;
+            self.lamport_timestamp += 1;
+            return temp;
+        }
+
         pub async fn new(
             mut available_nodes: u32,
             addresses: &mut Vec<String>,
@@ -87,6 +95,7 @@ mod load_balancer {
                 buffer: VecDeque::new(),
                 nodes,
                 available_nodes,
+                lamport_timestamp: 0,
             });
         }
 
@@ -191,7 +200,21 @@ mod load_balancer {
                 address
             );
 
-            let response = client.get_node_health(request.clone()).await;
+            let response = match timeout(
+                Duration::from_millis(10),
+                client.get_node_health(request.clone()),
+            )
+            .await
+            {
+                Ok(value) => value,
+                Err(_) => {
+                    error!(
+                        "Failed to get response from node at {} request timeout",
+                        address
+                    );
+                    return Err(Box::new(RpcError::FailedRequest));
+                }
+            };
 
             match response {
                 Ok(res) => {
