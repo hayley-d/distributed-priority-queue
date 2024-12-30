@@ -1,11 +1,14 @@
 use crate::job_management::job_service_server::JobService;
+use crate::job_management::node_health_service_server::NodeHealthService;
 use crate::job_management::paxos_service_client::PaxosServiceClient;
 use crate::job_management::{
-    EnqueueRequest, Job, JobRequest, JobResponse, PaxosCommit, PaxosPrepare, PaxosPropose,
+    EnqueueRequest, Job, JobRequest, JobResponse, NodeHealthRequest, NodeHealthResponse,
+    PaxosCommit, PaxosPrepare, PaxosPropose,
 };
 use crate::node_state::NodeState;
 use log::error;
 use std::sync::Arc;
+use sysinfo::System;
 use tokio::sync::Mutex;
 use tonic::Code;
 use tonic::{transport::Server, Request, Response, Status};
@@ -165,6 +168,24 @@ impl JobService for LocalJobService {
                 priority: row.get(1),
                 payload: row.get(2),
             }),
+        }));
+    }
+}
+
+#[tonic::async_trait]
+impl NodeHealthService for LocalJobService {
+    async fn get_node_health(
+        &self,
+        request: Request<NodeHealthRequest>,
+    ) -> Result<Response<NodeHealthResponse>, Status> {
+        let mut sys = System::new_all();
+        sys.refresh_cpu_usage();
+
+        return Ok(Response::new(NodeHealthResponse {
+            cpu_utilization: sys.global_cpu_usage(),
+            memory_usage: sys.used_memory() as f32,
+            queue_depth: self.node_state.lock().await.lamport_timestamp,
+            response_time: self.node_state.lock().await.lamport_timestamp as f32,
         }));
     }
 }
