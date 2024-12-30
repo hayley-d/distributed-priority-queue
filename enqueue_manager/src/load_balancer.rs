@@ -1,9 +1,8 @@
+#[allow(dead_code)]
 mod load_balancer {
     use log::{error, info};
     use std::collections::VecDeque;
-    use std::error::Error as anyhowErr;
     use std::fmt::Display;
-    use thiserror::Error as thisError;
     use tonic::transport::Channel;
 
     use crate::job_management::node_health_service_client::NodeHealthServiceClient;
@@ -55,11 +54,19 @@ mod load_balancer {
             addresses: Vec<String>,
         ) -> Result<Self, Box<dyn std::error::Error + 'static>> {
             let mut nodes: Vec<Node> = Vec::with_capacity(available_nodes as usize);
-
-            for address in addresses {
+            let mut weights: Vec<f32> = Vec::with_capacity(available_nodes as usize);
+            for address in &addresses {
                 let weight: f32 = Self::get_weight(&address).await?;
-                let node: Node = Node::new(address, weight);
-                nodes.push(node);
+                weights.push(weight);
+            }
+            let total_weight: f32 = weights.iter().sum();
+            let normalized_weights: Vec<f32> = weights
+                .iter()
+                .map(|&w| (w / total_weight) * 100.0)
+                .collect();
+
+            for (i, weight) in normalized_weights.iter().enumerate() {
+                nodes.push(Node::new(addresses[i].clone(), *weight));
             }
 
             nodes.sort_by(|a, b| b.cmp(&a));
