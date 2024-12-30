@@ -1,5 +1,6 @@
 use std::sync::Arc;
 
+use enqueue_manager::job_management::EnqueueRequest;
 use enqueue_manager::load_balancer::load_balancer::LoadBalancer;
 use enqueue_manager::manager_state::ManagerState;
 use rocket::http::Status;
@@ -31,9 +32,15 @@ async fn rocket() -> Rocket<Build> {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EnqueueJobRequest {}
+pub struct EnqueueJobRequest {
+    priority: i32,
+    payload: Vec<u8>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
-pub struct EnqueueResponse {}
+pub struct EnqueueResponse {
+    message: String,
+}
 
 #[post("/enqueue", format = "json", data = "<request>")]
 pub async fn enqueue(
@@ -41,5 +48,18 @@ pub async fn enqueue(
     manager_state: &rocket::State<Arc<Mutex<ManagerState>>>,
     load_balancer: &rocket::State<Arc<Mutex<LoadBalancer>>>,
 ) -> Result<Json<EnqueueResponse>, Status> {
-    todo!()
+    let enqueue_request: EnqueueRequest = EnqueueRequest {
+        priority: request.priority,
+        payload: request.payload.clone(),
+    };
+
+    let mut state = manager_state.lock().await;
+    let mut load_bal = load_balancer.lock().await;
+
+    state.increment_time();
+    load_bal.insert(enqueue_request);
+
+    return Ok(Json(EnqueueResponse {
+        message: format!("Job successfully added to queue"),
+    }));
 }

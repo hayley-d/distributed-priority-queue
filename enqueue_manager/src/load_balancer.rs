@@ -67,6 +67,10 @@ pub mod load_balancer {
             return temp;
         }
 
+        pub fn insert(&mut self, job: EnqueueRequest) {
+            self.buffer.push_back(job);
+        }
+
         pub async fn new(
             mut available_nodes: u32,
             addresses: &mut Vec<String>,
