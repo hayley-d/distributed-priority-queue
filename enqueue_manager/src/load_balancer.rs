@@ -15,6 +15,15 @@ mod load_balancer {
         weight: f32,
     }
 
+    impl Clone for Node {
+        fn clone(&self) -> Self {
+            return Node {
+                address: self.address.clone(),
+                weight: self.weight.clone(),
+            };
+        }
+    }
+
     impl Eq for Node {}
 
     impl PartialEq for Node {
@@ -240,12 +249,17 @@ mod load_balancer {
             }
         }
 
-        pub async fn distribute(&mut self) -> Result<Job, Box<dyn std::error::Error + 'static>> {
+        pub async fn distribute(&mut self) -> Result<(), Box<dyn std::error::Error + 'static>> {
             let number_jobs: usize = self.nodes.len();
 
-            for node in &self.nodes {
+            for node in self.nodes.clone() {
                 let my_jobs: i32 = (number_jobs as f32 * node.weight).floor() as i32;
+
                 for _ in 0..my_jobs {
+                    let time = self.increment_time();
+                    if time % 100 == 0 {
+                        self.update_weighting().await;
+                    }
                     let enqueue_request: EnqueueRequest = match self.buffer.pop_front() {
                         Some(r) => r,
                         None => {
@@ -276,9 +290,7 @@ mod load_balancer {
                     };
 
                     match response {
-                        Ok(res) => {
-                            return Ok(res.into_inner());
-                        }
+                        Ok(_) => (),
                         Err(_) => {
                             error!(
                                 "Failed to obtain enqueue response from node at {}",
@@ -289,7 +301,7 @@ mod load_balancer {
                     }
                 }
             }
-            todo!()
+            return Ok(());
         }
     }
 
