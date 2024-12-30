@@ -70,6 +70,15 @@ message PollJobResponse {
     Job job = 2; // The job assigned to the consumer
 }
 
+message NodeHealthRequest {}
+
+message NodeHealthResponse {
+    float cpu_utilization = 1;
+    float memory_usage = 2;
+    int32 queue_depth = 3;
+    float response_time = 4;
+}
+
 // Service definition for Job management and Paxos protocol
 service JobService {
   rpc EnqueueJob (EnqueueRequest) returns (Job);
@@ -87,3 +96,6 @@ service PaxosService {
 
 }
 
+service NodeHealthService {
+    rpc GetNodeHealth (NodeHealthRequest) returns (NodeHealthResponse);
+}
