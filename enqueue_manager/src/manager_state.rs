@@ -6,11 +6,11 @@ use tokio::sync::Mutex;
 pub struct ManagerState {
     pub lamport_timestamp: i64,
     pub manager_id: i32,
-    pub leaders: Vec<String>,
+    pub nodes: Vec<String>,
 }
 
 impl ManagerState {
-    pub fn new(leaders: Vec<String>) -> Arc<Mutex<Self>> {
+    pub fn new(nodes: Vec<String>) -> Arc<Mutex<Self>> {
         log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
 
         let manager_id: i32 = match std::env::args().collect::<Vec<String>>().get(1) {
@@ -30,7 +30,7 @@ impl ManagerState {
         return Arc::new(Mutex::new(ManagerState {
             lamport_timestamp: 0,
             manager_id,
-            leaders,
+            nodes,
         }));
     }
 

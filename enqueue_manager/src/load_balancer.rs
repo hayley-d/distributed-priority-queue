@@ -1,5 +1,5 @@
 #[allow(dead_code)]
-mod load_balancer {
+pub mod load_balancer {
     use log::{error, info};
     use std::collections::VecDeque;
     use std::fmt::Display;
