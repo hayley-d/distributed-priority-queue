@@ -90,6 +90,92 @@ mod load_balancer {
             });
         }
 
+        async fn add_node(&mut self, address: String) {
+            let weight = match Self::get_weight(&address).await {
+                Ok(w) => w,
+                Err(_) => {
+                    error!("Failed to get node health status from address: {}", address);
+                    return;
+                }
+            };
+
+            let mut weights: Vec<f32> = Vec::with_capacity(self.available_nodes as usize + 1);
+
+            let mut remove_nodes: Vec<usize> = Vec::new();
+            for (i, node) in self.nodes.iter().enumerate() {
+                let weight = match Self::get_weight(&node.address).await {
+                    Ok(w) => w,
+                    Err(_) => {
+                        error!(
+                            "Failed to get node health status from address: {}",
+                            node.address
+                        );
+                        self.available_nodes -= 1;
+                        remove_nodes.push(i);
+                        continue;
+                    }
+                };
+
+                weights.push(weight);
+            }
+
+            for i in remove_nodes {
+                self.nodes.remove(i);
+            }
+
+            let total_weight = weights.iter().sum::<f32>();
+            weights.push(weight);
+            self.nodes.push(Node::new(address, weight));
+
+            let normalized_weights: Vec<f32> = weights
+                .iter()
+                .map(|&w| (w / total_weight) * 100.0)
+                .collect();
+
+            for (i, weight) in normalized_weights.iter().enumerate() {
+                self.nodes[i].weight = *weight;
+            }
+        }
+
+        async fn update_weighting(&mut self) {
+            let mut weights: Vec<f32> = Vec::with_capacity(self.available_nodes as usize + 1);
+
+            let mut remove_nodes: Vec<usize> = Vec::new();
+            for (i, node) in self.nodes.iter().enumerate() {
+                let weight = match Self::get_weight(&node.address).await {
+                    Ok(w) => w,
+                    Err(_) => {
+                        error!(
+                            "Failed to get node health status from address: {}",
+                            node.address
+                        );
+                        self.available_nodes -= 1;
+                        remove_nodes.push(i);
+                        continue;
+                    }
+                };
+
+                weights.push(weight);
+            }
+
+            for i in remove_nodes {
+                self.nodes.remove(i);
+            }
+
+            let total_weight = weights.iter().sum::<f32>();
+
+            let normalized_weights: Vec<f32> = weights
+                .iter()
+                .map(|&w| (w / total_weight) * 100.0)
+                .collect();
+
+            for (i, weight) in normalized_weights.iter().enumerate() {
+                if self.nodes.get(i).is_some() {
+                    self.nodes[i].weight = *weight;
+                }
+            }
+        }
+
         /// Calculates the weight of the leader
         async fn get_weight(address: &String) -> Result<f32, Box<dyn std::error::Error + 'static>> {
             let request: NodeHealthRequest = NodeHealthRequest {};
