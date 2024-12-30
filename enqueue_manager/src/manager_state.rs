@@ -1,0 +1,41 @@
+use log::error;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
+#[derive(Debug)]
+pub struct ManagerState {
+    pub lamport_timestamp: i64,
+    pub manager_id: i32,
+    pub leaders: Vec<String>,
+}
+
+impl ManagerState {
+    pub fn new(leaders: Vec<String>) -> Arc<Mutex<Self>> {
+        log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
+        let manager_id: i32 = match std::env::args().collect::<Vec<String>>().get(1) {
+            Some(id) => match id.parse::<i32>() {
+                Ok(i) => i,
+                Err(_) => {
+                    error!("Failed to parse node id: Node id must be of type u64");
+                    std::process::exit(1);
+                }
+            },
+            None => {
+                error!("No node id provided in command line arguments: could not start node");
+                std::process::exit(1);
+            }
+        };
+
+        return Arc::new(Mutex::new(ManagerState {
+            lamport_timestamp: 0,
+            manager_id,
+            leaders,
+        }));
+    }
+
+    pub fn increment_time(&mut self) -> i64 {
+        let temp: i64 = self.lamport_timestamp;
+        self.lamport_timestamp += 1;
+        return temp;
+    }
+}
