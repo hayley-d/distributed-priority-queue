@@ -10,6 +10,8 @@ pub mod load_balancer {
     use crate::job_management::node_health_service_client::NodeHealthServiceClient;
     use crate::job_management::{EnqueueRequest, Job, NodeHealthRequest};
 
+    /// Node represents a replica in the distributed system
+    /// `address` is url address of the replica to recieved gRPC requests
     pub struct Node {
         address: String,
         weight: f32,
@@ -48,6 +50,7 @@ pub mod load_balancer {
     }
 
     impl Node {
+        /// Creates a new node using the provided addess and weighting
         pub fn new(address: String, weight: f32) -> Self {
             return Node { address, weight };
         }
