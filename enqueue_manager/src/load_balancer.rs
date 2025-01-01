@@ -80,6 +80,7 @@ pub mod load_balancer {
         ) -> Result<Self, Box<dyn std::error::Error + 'static>> {
             let mut nodes: Vec<Node> = Vec::with_capacity(available_nodes as usize);
             let mut weights: Vec<f32> = Vec::with_capacity(available_nodes as usize);
+
             for (i, address) in addresses.clone().iter().enumerate() {
                 let weight: f32 = match Self::get_weight(&address).await {
                     Ok(w) => w,
@@ -88,7 +89,6 @@ pub mod load_balancer {
                             "Failed to get response for node health from address: {}",
                             address
                         );
-
                         available_nodes = available_nodes - 1;
                         addresses.remove(i);
                         continue;
@@ -96,7 +96,9 @@ pub mod load_balancer {
                 };
                 weights.push(weight);
             }
+
             let total_weight: f32 = weights.iter().sum();
+
             let normalized_weights: Vec<f32> = weights
                 .iter()
                 .map(|&w| (w / total_weight) * 100.0)
@@ -325,3 +327,6 @@ pub mod load_balancer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {}
