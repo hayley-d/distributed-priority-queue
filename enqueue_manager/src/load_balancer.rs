@@ -10,6 +10,8 @@ pub mod load_balancer {
     use crate::job_management::node_health_service_client::NodeHealthServiceClient;
     use crate::job_management::{EnqueueRequest, Job, NodeHealthRequest};
 
+    /// Node represents a replica in the distributed system
+    /// `address` is url address of the replica to recieved gRPC requests
     pub struct Node {
         address: String,
         weight: f32,
@@ -48,6 +50,7 @@ pub mod load_balancer {
     }
 
     impl Node {
+        /// Creates a new node using the provided addess and weighting
         pub fn new(address: String, weight: f32) -> Self {
             return Node { address, weight };
         }
@@ -77,6 +80,7 @@ pub mod load_balancer {
         ) -> Result<Self, Box<dyn std::error::Error + 'static>> {
             let mut nodes: Vec<Node> = Vec::with_capacity(available_nodes as usize);
             let mut weights: Vec<f32> = Vec::with_capacity(available_nodes as usize);
+
             for (i, address) in addresses.clone().iter().enumerate() {
                 let weight: f32 = match Self::get_weight(&address).await {
                     Ok(w) => w,
@@ -85,7 +89,6 @@ pub mod load_balancer {
                             "Failed to get response for node health from address: {}",
                             address
                         );
-
                         available_nodes = available_nodes - 1;
                         addresses.remove(i);
                         continue;
@@ -93,7 +96,9 @@ pub mod load_balancer {
                 };
                 weights.push(weight);
             }
+
             let total_weight: f32 = weights.iter().sum();
+
             let normalized_weights: Vec<f32> = weights
                 .iter()
                 .map(|&w| (w / total_weight) * 100.0)
@@ -322,3 +327,6 @@ pub mod load_balancer {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {}
