@@ -8,6 +8,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 
+/// The current Paxos state
 #[derive(Debug)]
 pub struct PaxosState {
     pub promised_proposal: i32,
