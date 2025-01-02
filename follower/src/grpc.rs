@@ -8,12 +8,18 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
 
+/// The current Paxos state
 #[derive(Debug)]
 pub struct PaxosState {
+    // The promise number
     pub promised_proposal: i32,
+    // The last accepted proposal
     pub accepted_proposal: i32,
+    // The accepted job
     pub accepted_value: Option<Job>,
+    // Local min heap
     pub queue: MinHeap,
+    // Lamport timestamp
     pub lamport_timestamp: u64,
 }
 
