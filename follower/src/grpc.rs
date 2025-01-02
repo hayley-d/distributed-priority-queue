@@ -15,8 +15,11 @@ pub struct PaxosState {
     pub promised_proposal: i32,
     // The last accepted proposal
     pub accepted_proposal: i32,
+    // The accepted job
     pub accepted_value: Option<Job>,
+    // Local min heap
     pub queue: MinHeap,
+    // Lamport timestamp
     pub lamport_timestamp: u64,
 }
 
