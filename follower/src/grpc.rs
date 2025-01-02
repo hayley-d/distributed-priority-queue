@@ -11,7 +11,9 @@ use tonic::{Request, Response, Status};
 /// The current Paxos state
 #[derive(Debug)]
 pub struct PaxosState {
+    // The promise number
     pub promised_proposal: i32,
+    // The last accepted proposal
     pub accepted_proposal: i32,
     pub accepted_value: Option<Job>,
     pub queue: MinHeap,
