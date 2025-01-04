@@ -2,6 +2,8 @@
 name = "leader"
 version = "0.1.0"
 edition = "2021"
+authors =["Hayley Dodkins"]
+
 
 [dependencies]
 tokio = {version="1.42.0",features=["full"]}
