@@ -6,6 +6,26 @@ use crate::job_management::long_polling_service_client::LongPollingServiceClient
 use crate::job_management::{Job, PollJobRequest, PollJobResponse};
 use crate::min_heap::MinHeap;
 
+/// Consumer state represented with:
+/// consumer_id: The id of the consumer provided in command line arguments at startup.
+/// nodes: A list of nodes that the consumer pulls from to get jobs.
+/// heap: A loacal min heap implementation for fetched jobs.
+/// lamport_timestamp: A logical clock
+/// timeout: Specified timeout for long polling
+///
+/// # Example
+/// ```
+/// use queue_consumer::consumer_state;
+/// let aging_factor: f32 = 0.5;
+///
+/// let state: ConsumerState = {
+///     consumer_id: 1,
+///     nodes : vec!["http://node1", "http://node2"],
+///     heap: MinHeap::new(aging_factor),
+///     lamport_timestamp: 0,
+///     timeout: 30
+/// }
+/// ```
 pub struct ConsumerState {
     consumer_id: i32,
     nodes: Vec<String>,
