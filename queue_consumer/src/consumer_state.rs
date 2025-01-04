@@ -84,13 +84,13 @@ impl LocalLongPollService {
     pub async fn get_jobs(&mut self) {
         let gaurd = &mut self.consumer_state.lock().await;
 
+        // create a request to get jobs from the nodes
         let request: PollJobRequest = PollJobRequest {
             consumer_id: gaurd.consumer_id,
             timeout_seconds: gaurd.timeout,
         };
 
-        let mut responses: Vec<Result<tonic::Response<PollJobResponse>, tonic::Status>> =
-            Vec::new();
+        let mut responses: Vec<Result<tonic::Response<PollJobResponse>, tonic::Status>> = vec![];
 
         for node in &gaurd.nodes {
             let mut client = LongPollingServiceClient::connect(node.to_string())
@@ -117,7 +117,9 @@ impl LocalLongPollService {
                         continue;
                     }
                 }
-                Err(_) => continue,
+                Err(_) => {
+                    continue;
+                }
             }
         }
     }
