@@ -89,7 +89,8 @@ impl LocalLongPollService {
             timeout_seconds: gaurd.timeout,
         };
 
-        let mut responses = Vec::new();
+        let mut responses: Vec<Result<tonic::Response<PollJobResponse>, tonic::Status>> =
+            Vec::new();
 
         for node in &gaurd.nodes {
             let mut client = LongPollingServiceClient::connect(node.to_string())
