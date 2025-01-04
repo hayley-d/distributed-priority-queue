@@ -16,6 +16,16 @@ use crate::min_heap::MinHeap;
 /// # Example
 /// ```
 /// use queue_consumer::consumer_state;
+/// let aging_factor: f32 = 0.5;
+///
+/// let state: ConsumerState = {
+///     consumer_id: 1,
+///     nodes : vec!["http://node1", "http://node2"],
+///     heap: MinHeap::new(aging_factor),
+///     lamport_timestamp: 0,
+///     timeout: 30
+/// }
+/// ```
 pub struct ConsumerState {
     consumer_id: i32,
     nodes: Vec<String>,
