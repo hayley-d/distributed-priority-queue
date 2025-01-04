@@ -1,0 +1,9 @@
+[workspace]
+members = ["enqueue_manager","follower","leader","queue_consumer"]
+
+[workspace.package]
+name = "distributed-priority-queue"
+description = "A distributed priority queue"
+version = "0.1.0"    
+authors = ["Hayley Dodkins"]
+
