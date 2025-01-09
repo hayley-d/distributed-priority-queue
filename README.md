@@ -1,9 +1,11 @@
-<p><a target="_blank" href="https://app.eraser.io/workspace/PgkXybzAAX4Qs9me1TaF" id="edit-in-eraser-github-link"><img alt="Edit in Eraser" src="https://firebasestorage.googleapis.com/v0/b/second-petal-295822.appspot.com/o/images%2Fgithub%2FOpen%20in%20Eraser.svg?alt=media&amp;token=968381c8-a7e7-472a-8ed6-4a6626da5501"></a></p>
+<p><a target="_blank" href="https://app.eraser.io/workspace/ABZxvFD0Ln1sSE9MLZsF" id="edit-in-eraser-github-link"><img alt="Edit in Eraser" src="https://firebasestorage.googleapis.com/v0/b/second-petal-295822.appspot.com/o/images%2Fgithub%2FOpen%20in%20Eraser.svg?alt=media&amp;token=968381c8-a7e7-472a-8ed6-4a6626da5501"></a></p>
 
 # Distributed Priority Queue
 A scalable, distributed priority queue system designed to efficiently handle high-concurrency workloads. This project highlights key concepts in distributed systems, fault tolerance, and load balancing, drawing inspiration from real-world applications like Facebook's priority queue.
 
-![Figure 1](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---KoCYMlA0OxAEsrqqdAZji---figure---ts0fckGEDmK8D0sQ9NRoyw.png "Figure 1")
+![Figure 2](/.eraser/ABZxvFD0Ln1sSE9MLZsF___XkJZjuhCcuhY39UPh3qdtmdsVUw1___---figure---A4DQbPsdVhKnyiNOqOk7g---figure---_7O9b58eNT6VJfolPZFmaw.png "Figure 2")
+
+
 
 ## Features
 ### Protocol Buffers and gRPC
@@ -11,11 +13,14 @@ A scalable, distributed priority queue system designed to efficiently handle hig
 - **gRPC** is used for communication between services, ensuring fast and reliable bi-directional streaming.
 ### Paxos for Leader-Follower Fault Tolerance
 - **Paxos** ensures fault tolerance within the leader-follower replication model, maintaining consistency and availability even if nodes or leaders fail.
+![Figure 1](/.eraser/ABZxvFD0Ln1sSE9MLZsF___XkJZjuhCcuhY39UPh3qdtmdsVUw1___---figure---9ZzjRp9-F6Uc6Crsbvsw7---figure---2elV4sFTULS_wPqIk2bing.png "Figure 1")
+
 ### Leader-Follower Pattern with Quorum-Based Replication
 - **Leader-Follower Model**: A leader node handles write operations, while follower nodes replicate data for fault tolerance.
 - **Quorum-Based Approach**: Requires a majority of nodes to acknowledge a change before it’s considered committed, ensuring data consistency.
-### Dynamic Load Balancer 
-- A **gRPC-based weighted round-robin load balancer**  that dynamically adjusts node weights using real-time health metrics such as CPU usage, queue depth, and task processing rates.
+### Dynamic Load Balancer
+- A **gRPC-based weighted round-robin load balancer** that dynamically adjusts node weights using real-time health metrics such as CPU usage, queue depth, and task processing rates.
+![Figure 3](/.eraser/ABZxvFD0Ln1sSE9MLZsF___XkJZjuhCcuhY39UPh3qdtmdsVUw1___---figure---zWfYm6V9X6nD0Op-qYnJ2---figure---Z18o7S9kzxN3q0VQ_1WuVA.png "Figure 3")
 
 ### Long Polling with Pull Model for Consumers
 - **Long Polling** allows consumers to pull jobs from the queue only when they are available, optimizing resource usage and reducing idle time.
@@ -37,7 +42,6 @@ CREATE TABLE jobs (
 - **Error Logs**: Tracks and reports errors with relevant details.
 - **Request Logs**: Logs details about requests received by each node.
 **Example log entries:**
-
 Error Log:
 
 ```
@@ -71,9 +75,6 @@ The system consists of four main components, each with distinct responsibilities
 - **Role**: The consumer pulls jobs from the distributed queue, processes them, and acknowledges their completion.
 - **Functionality**:
     - Uses long-polling to efficiently wait for and fetch jobs, ensuring resources are not wasted while waiting for tasks.
-![Figure 2](/.eraser/PgkXybzAAX4Qs9me1TaF___c22vAoQHs6VbR0UeOtzrfiBKTuJ3___---figure---YPP15YfllEX9X_-BeUU1w---figure---5txp8ax3V7Fd65uKuRSIaA.png "Figure 2")
-
-
 
 ## References
 **Facebook Engineering** (2021) _FOQS scaling a distributed priority queue_. Available at: [﻿https://engineering.fb.com/2021/02/22/production-engineering/foqs-scaling-a-distributed-priority-queue/](https://engineering.fb.com/2021/02/22/production-engineering/foqs-scaling-a-distributed-priority-queue/) (Accessed: 15 December 2024).
@@ -94,4 +95,4 @@ The system consists of four main components, each with distinct responsibilities
 
 
 
-<!--- Eraser file: https://app.eraser.io/workspace/PgkXybzAAX4Qs9me1TaF --->
+<!--- Eraser file: https://app.eraser.io/workspace/ABZxvFD0Ln1sSE9MLZsF --->
