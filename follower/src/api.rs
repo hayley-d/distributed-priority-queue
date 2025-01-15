@@ -155,7 +155,7 @@ pub async fn dequeue_amount(
         });
     }
 
-    return Ok(Json(BatchDequeueResponse { jobs }));
+    Ok(Json(BatchDequeueResponse { jobs }))
 }
 
 #[post("/enqueue", format = "json", data = "<request>")]
@@ -171,26 +171,26 @@ pub async fn enqueue(
         .prepare("INSERT INTO jobs (priority, payload) VALUES ($1,$2) RETURNING job_id")
         .await
         .map_err(|_| {
-            error!("Error: Failed to create INSERT query");
-            ApiError::DatabaseError(format!("Error creating query"))
+            error!(target: "error_logger","Error: Failed to create INSERT query");
+            ApiError::DatabaseError("Error creating query".to_string())
         })?;
 
     let row = client
         .query_one(&query, &[&request.priority, &request.payload])
         .await
         .map_err(|_| {
-            error!("Error: Failed to run INSERT query");
-            ApiError::DatabaseError(format!("Error creating row"))
+            error!(target:"error_logger","Error: Failed to run INSERT query");
+            ApiError::DatabaseError("Error creating row".to_string())
         })?;
 
-    let job_id: i64 = row.get(0);
+    let job_id: Uuid = row.get(0);
 
     // Increment logical time
     *clock.lock().await += 1;
 
     heap.lock()
         .await
-        .insert(request.priority as u32, job_id as u64, *clock.lock().await);
+        .insert(request.priority as u32, job_id, *clock.lock().await);
 
     heap.lock()
         .await
@@ -198,10 +198,10 @@ pub async fn enqueue(
 
     println!("Inserted job with job_id {} into jobs table", job_id);
 
-    return Ok(Json(CreationResponse {
+    Ok(Json(CreationResponse {
         message: format!("Job with job_id={} successully added to database", job_id),
-        job_id: job_id as u64,
-    }));
+        job_id,
+    }))
 }
 
 #[post("/update", format = "json", data = "<request>")]

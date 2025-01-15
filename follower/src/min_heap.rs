@@ -2,6 +2,8 @@ use std::collections::VecDeque;
 use std::fmt::{self, Display};
 use std::mem;
 
+use uuid::Uuid;
+
 #[derive(Debug)]
 pub struct MinHeap {
     pub heap: VecDeque<HeapNode>,
@@ -11,7 +13,7 @@ pub struct MinHeap {
 #[derive(PartialEq, Eq)]
 pub struct HeapNode {
     /// The unique job id of the job
-    pub job_id: u64,
+    pub job_id: Uuid,
     /// The original priority of the job
     pub priority: u32,
     /// Dynamically computed priority to ensure low-priority jobs eventually get processed
@@ -21,7 +23,7 @@ pub struct HeapNode {
 }
 
 impl HeapNode {
-    pub fn new(job_id: u64, priority: u32, timestamp: u64) -> Self {
+    pub fn new(job_id: Uuid, priority: u32, timestamp: u64) -> Self {
         return HeapNode {
             job_id,
             priority,
