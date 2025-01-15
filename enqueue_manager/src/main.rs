@@ -15,16 +15,17 @@ extern crate rocket;
 #[launch]
 async fn rocket() -> Rocket<Build> {
     let mut nodes: Vec<String> = vec!["http://node1".to_string(), "http://node2".to_string()];
-    let size: u32 = 2;
+    log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
 
     let state = ManagerState::new(nodes.clone());
-    let load_balancer: LoadBalancer = match LoadBalancer::new(size, &mut nodes).await {
+    let load_balancer: LoadBalancer = match LoadBalancer::new(&mut nodes).await {
         Ok(lb) => lb,
         Err(_) => {
-            error!("Failed to start server, issue creating load balancer");
+            error!(target: "error_logger","Failed to start server, issue creating load balancer");
             std::process::exit(1);
         }
     };
+
     rocket::build()
         .manage(state)
         .manage(load_balancer)

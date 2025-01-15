@@ -11,8 +11,6 @@ pub struct ManagerState {
 
 impl ManagerState {
     pub fn new(nodes: Vec<String>) -> Arc<Mutex<Self>> {
-        log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
-
         let manager_id: i32 = match std::env::args().collect::<Vec<String>>().get(1) {
             Some(id) => match id.parse::<i32>() {
                 Ok(i) => i,
