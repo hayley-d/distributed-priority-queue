@@ -82,7 +82,7 @@ service LongPollingService {
 
 service PaxosService {
   rpc Prepare (PaxosPrepare) returns (PaxosPromise);
-  rpc Propose (PaxosAccept) returns (PaxosAck);
+  rpc Accept (PaxosAccept) returns (PaxosAck);
 }
 
 service NodeHealthService {

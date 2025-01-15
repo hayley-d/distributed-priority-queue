@@ -101,7 +101,7 @@ impl PaxosService for LocalPaxosService {
                 proposal_number: propose.proposal_number,
             }))
         } else {
-            error!(target:"error_logger","Failed Paxos proposal: proposal number was less than promised");
+            error!(target:"error_logger","Failed Paxos Accept: proposal number was less than promised");
             Err(Status::failed_precondition(
                 "Proposal number is less than promised.",
             ))
