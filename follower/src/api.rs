@@ -233,10 +233,10 @@ pub async fn update(
 
     heap.calculate_effective_priority(*clock.lock().await);
 
-    return Ok(Json(UpdateResponse {
+    Ok(Json(UpdateResponse {
         message: format!(
             "Job with job_id={} has been successfully updated",
             request.job_id
         ),
-    }));
+    }))
 }
