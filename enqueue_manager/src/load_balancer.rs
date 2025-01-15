@@ -270,10 +270,7 @@ pub mod load_balancer {
                     return Ok(weight);
                 }
                 Err(_) => {
-                    error!(
-                        "Failed to obtain node health status from node at {}",
-                        address
-                    );
+                    error!(target:"error_logger","Failed to obtain node health status from node at {}",address);
                     return Err(Box::new(RpcError::FailedRequest));
                 }
             }
