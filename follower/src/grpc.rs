@@ -90,26 +90,21 @@ impl PaxosService for LocalPaxosService {
     async fn propose(&self, request: Request<PaxosAccept>) -> Result<Response<PaxosAck>, Status> {
         let mut state = self.state.lock().await;
         let propose = request.into_inner();
-        info!(
-            "Paxos Proposal recieved with proposal number {}",
-            propose.proposal_number
-        );
-
+        info!(target:"error_logger","Paxos Proposal recieved with proposal number {}",propose.proposal_number);
         if propose.proposal_number >= state.promised_proposal {
             state.accepted_proposal = propose.proposal_number;
             state.accepted_value = match propose.proposed_job {
                 Some(job) => Some(job.clone()),
                 None => {
-                    error!("Failed proposal: no job provided in proposal");
+                    error!(target: "error_logger","Failed proposal: no job provided in proposal");
                     return Err(Status::internal("No job provided in proposal"));
                 }
             };
-
             Ok(Response::new(PaxosAck {
                 proposal_number: propose.proposal_number,
             }))
         } else {
-            error!("Failed Paxos proposal: proposal number was less than promised");
+            error!(target:"error_logger","Failed Paxos proposal: proposal number was less than promised");
             Err(Status::failed_precondition(
                 "Proposal number is less than promised.",
             ))
