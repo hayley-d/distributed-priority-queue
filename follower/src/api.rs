@@ -71,7 +71,7 @@ pub async fn dequeue(
     let node: HeapNode = match heap.lock().await.get_top() {
         Some(n) => n,
         None => {
-            error!("Error: Attempt to pull from empty heap");
+            error!(target:"error_logger","Error: Attempt to pull from empty heap");
             return Err(ApiError::EmptyHeapError);
         }
     };
