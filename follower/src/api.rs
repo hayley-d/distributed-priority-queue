@@ -28,6 +28,8 @@ pub struct BatchDequeueResponse {
 }
 
 /// EnqueueRequest represents the request expected when the /enqueue route is used.
+/// `priority`: The priority of the potential job.
+/// `payload`: The byte payload of the job to be processed.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct EnqueueRequest {
     priority: i32,
