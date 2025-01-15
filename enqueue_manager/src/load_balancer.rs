@@ -267,15 +267,19 @@ pub mod load_balancer {
                         .round()
                         / 100.0;
 
-                    return Ok(weight);
+                    Ok(weight)
                 }
                 Err(_) => {
                     error!(target:"error_logger","Failed to obtain node health status from node at {}",address);
-                    return Err(Box::new(RpcError::FailedRequest));
+                    Err(Box::new(RpcError::FailedRequest))
                 }
             }
         }
 
+        /// Distributes jobs to the nodes in the distributed system periodically.
+        ///
+        /// # Returns
+        /// A Result object that is either Ok(()) or Err(Box<dyn std::error::Error + 'static>)
         pub async fn distribute(&mut self) -> Result<(), Box<dyn std::error::Error + 'static>> {
             let number_jobs: usize = self.nodes.len();
 
