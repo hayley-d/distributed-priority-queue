@@ -12,6 +12,8 @@ pub mod load_balancer {
 
     /// Node represents a replica in the distributed system
     /// `address` is url address of the replica to recieved gRPC requests
+    /// `weight` is the calculated weight for the node based on CPU utilization, memory usage,queue
+    /// depth and response time
     pub struct Node {
         address: String,
         weight: f32,
