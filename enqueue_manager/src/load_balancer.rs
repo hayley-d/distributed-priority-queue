@@ -22,10 +22,10 @@ pub mod load_balancer {
 
     impl Clone for Node {
         fn clone(&self) -> Self {
-            return Node {
+            Node {
                 address: self.address.clone(),
                 weight: self.weight.clone(),
-            };
+            }
         }
     }
 
@@ -63,10 +63,14 @@ pub mod load_balancer {
         /// # Returns
         /// A new node.
         pub fn new(address: String, weight: f32) -> Self {
-            return Node { address, weight };
+            Node { address, weight }
         }
     }
 
+    /// Load Blanacer State structure that keeps information needed to distribute jobs.
+    /// `buffer`: The buffer jobs are added to before being distributed.
+    /// `nodes`: A vector of nodes in the distributed system.
+    /// `lamport_timestamp`: The logical clock.
     pub struct LoadBalancer {
         buffer: VecDeque<EnqueueRequest>,
         nodes: Vec<Node>,
