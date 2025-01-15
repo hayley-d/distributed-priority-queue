@@ -312,10 +312,7 @@ pub mod load_balancer {
                     {
                         Ok(value) => value,
                         Err(_) => {
-                            error!(
-                                "Failed to get response from node at {} request timeout",
-                                node.address
-                            );
+                            error!(target:"error_logger","Failed to get response from node at {} request timeout",node.address);
                             return Err(Box::new(RpcError::FailedRequest));
                         }
                     };
@@ -323,16 +320,13 @@ pub mod load_balancer {
                     match response {
                         Ok(_) => (),
                         Err(_) => {
-                            error!(
-                                "Failed to obtain enqueue response from node at {}",
-                                node.address
-                            );
+                            error!(target:"error_logger","Failed to obtain enqueue response from node at {}",node.address);
                             return Err(Box::new(RpcError::FailedRequest));
                         }
                     }
                 }
             }
-            return Ok(());
+            Ok(())
         }
     }
 
