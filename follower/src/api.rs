@@ -95,11 +95,11 @@ pub async fn dequeue(
             ApiError::DatabaseError("Error database SELECT query failed.".to_string())
         })?;
 
-    return Ok(Json(DequeueResponse {
+    Ok(Json(DequeueResponse {
         job_id: row.get(0),
         priority: row.get(1),
         payload: row.get(2),
-    }));
+    }))
 }
 
 #[get("/dequeue/<amount>")]
@@ -119,8 +119,8 @@ pub async fn dequeue_amount(
     let mut jobs: Vec<DequeueResponse> = Vec::new();
 
     let amount: usize = amount.parse::<usize>().map_err(|_| {
-        error!("Error: Non-numerical amount provided by GET request in /dequeue/<amount>");
-        ApiError::InternalServerError(format!("Provided non numerical amount"))
+        error!(target:"error_logger","Error: Non-numerical amount provided by GET request in /dequeue/<amount>");
+        ApiError::InternalServerError("Provided non numerical amount".to_string())
     })?;
 
     // Increment logical time
