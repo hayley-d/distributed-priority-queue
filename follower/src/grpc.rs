@@ -84,7 +84,15 @@ impl PaxosService for LocalPaxosService {
         }
     }
 
-    async fn propose(&self, request: Request<PaxosAccept>) -> Result<Response<PaxosAck>, Status> {
+    /// Recieves the Accpet message from the proposer so that this acceptor can accept the value
+    /// and record it.
+    ///
+    /// # Arguments
+    /// `request`: The Paxos Accept message from the proposer.
+    ///
+    /// # Return
+    /// A Result object that is either an Ok(tonic::Response) or Err(tonic::Status)
+    async fn accept(&self, request: Request<PaxosAccept>) -> Result<Response<PaxosAck>, Status> {
         let mut state = self.state.lock().await;
         let propose = request.into_inner();
         info!(target:"error_logger","Paxos Accept message recieved with proposal number {}",propose.proposal_number);

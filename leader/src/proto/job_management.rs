@@ -455,7 +455,7 @@ pub mod paxos_service_client {
                 .insert(GrpcMethod::new("job_management.PaxosService", "Prepare"));
             self.inner.unary(req, path, codec).await
         }
-        pub async fn propose(
+        pub async fn accept(
             &mut self,
             request: impl tonic::IntoRequest<super::PaxosAccept>,
         ) -> std::result::Result<tonic::Response<super::PaxosAck>, tonic::Status> {
@@ -469,11 +469,11 @@ pub mod paxos_service_client {
                 })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/job_management.PaxosService/Propose",
+                "/job_management.PaxosService/Accept",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("job_management.PaxosService", "Propose"));
+                .insert(GrpcMethod::new("job_management.PaxosService", "Accept"));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -1015,7 +1015,7 @@ pub mod paxos_service_server {
             &self,
             request: tonic::Request<super::PaxosPrepare>,
         ) -> std::result::Result<tonic::Response<super::PaxosPromise>, tonic::Status>;
-        async fn propose(
+        async fn accept(
             &self,
             request: tonic::Request<super::PaxosAccept>,
         ) -> std::result::Result<tonic::Response<super::PaxosAck>, tonic::Status>;
@@ -1141,11 +1141,11 @@ pub mod paxos_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/job_management.PaxosService/Propose" => {
+                "/job_management.PaxosService/Accept" => {
                     #[allow(non_camel_case_types)]
-                    struct ProposeSvc<T: PaxosService>(pub Arc<T>);
+                    struct AcceptSvc<T: PaxosService>(pub Arc<T>);
                     impl<T: PaxosService> tonic::server::UnaryService<super::PaxosAccept>
-                    for ProposeSvc<T> {
+                    for AcceptSvc<T> {
                         type Response = super::PaxosAck;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -1157,7 +1157,7 @@ pub mod paxos_service_server {
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as PaxosService>::propose(&inner, request).await
+                                <T as PaxosService>::accept(&inner, request).await
                             };
                             Box::pin(fut)
                         }
@@ -1168,7 +1168,7 @@ pub mod paxos_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = ProposeSvc(inner);
+                        let method = AcceptSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
