@@ -213,7 +213,7 @@ pub async fn update(
 ) -> Result<Json<UpdateResponse>, ApiError> {
     let mut heap = heap.lock().await;
 
-    heap.change_priority(request.job_id as u64, request.priority as u32);
+    heap.change_priority(request.job_id, request.priority as u32);
 
     let client = db.lock().await;
 
@@ -224,11 +224,8 @@ pub async fn update(
         )
         .await
         .map_err(|_| {
-            error!(
-                "Error: Failed to run UPDATE query on job {}",
-                request.job_id
-            );
-            ApiError::DatabaseError(format!("Error updating database"))
+            error!(target:"error_logger","Error: Failed to run UPDATE query on job {}",request.job_id);
+            ApiError::DatabaseError("Error updating database".to_string())
         })?;
 
     // Increment logical time
