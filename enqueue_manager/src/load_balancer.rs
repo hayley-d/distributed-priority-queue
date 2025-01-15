@@ -1,5 +1,5 @@
 #[allow(dead_code)]
-pub mod load_balancer {
+pub mod load_balancer_logic {
     use crate::job_management::{
         job_service_client::JobServiceClient, node_health_service_client::NodeHealthServiceClient,
         EnqueueRequest, NodeHealthRequest,
@@ -24,7 +24,7 @@ pub mod load_balancer {
         fn clone(&self) -> Self {
             Node {
                 address: self.address.clone(),
-                weight: self.weight.clone(),
+                weight: self.weight,
             }
         }
     }
@@ -238,11 +238,8 @@ pub mod load_balancer {
             let mut client: NodeHealthServiceClient<Channel> =
                 NodeHealthServiceClient::connect(address.clone()).await?;
 
-            let response = match timeout(
-                Duration::from_millis(10),
-                client.get_node_health(request.clone()),
-            )
-            .await
+            let response = match timeout(Duration::from_millis(10), client.get_node_health(request))
+                .await
             {
                 Ok(value) => value,
                 Err(_) => {

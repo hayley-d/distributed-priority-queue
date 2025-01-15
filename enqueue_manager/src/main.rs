@@ -1,5 +1,5 @@
 use enqueue_manager::job_management::EnqueueRequest;
-use enqueue_manager::load_balancer::load_balancer::LoadBalancer;
+use enqueue_manager::load_balancer::load_balancer_logic::LoadBalancer;
 use enqueue_manager::manager_state::ManagerState;
 use log::error;
 use rocket::http::Status;
