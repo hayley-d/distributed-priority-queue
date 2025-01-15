@@ -88,7 +88,7 @@ pub async fn dequeue(
         })?;
 
     let row = client
-        .query_one(&query, &[&(node.job_id as i64)])
+        .query_one(&query, &[&(node.job_id)])
         .await
         .map_err(|_| {
             error!(target:"error_logger","Error: Attempt to SELECT from database failed");
@@ -141,7 +141,7 @@ pub async fn dequeue_amount(
             })?;
 
         let row = client
-            .query_one(&query, &[&(node.job_id as i64)])
+            .query_one(&query, &[&(node.job_id)])
             .await
             .map_err(|_| {
                 error!(target:"error_logger","Error: Failed to run SELECT query");
