@@ -233,7 +233,7 @@ pub mod load_balancer {
             let request: NodeHealthRequest = NodeHealthRequest {};
 
             // log gRPC request
-            info!("NodeHealthService Request to address {}", address);
+            info!(target:"request_logger","NodeHealthService Request to address {}", address);
 
             let mut client: NodeHealthServiceClient<Channel> =
                 NodeHealthServiceClient::connect(address.clone()).await?;
@@ -246,10 +246,7 @@ pub mod load_balancer {
             {
                 Ok(value) => value,
                 Err(_) => {
-                    error!(
-                        "Failed to get response from node at {} request timeout",
-                        address
-                    );
+                    error!(target:"error_logger","Failed to get response from node at {} request timeout",address);
                     return Err(Box::new(RpcError::FailedRequest));
                 }
             };
