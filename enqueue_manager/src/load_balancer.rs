@@ -193,11 +193,7 @@ pub mod load_balancer {
                 let weight = match Self::get_weight(&node.address).await {
                     Ok(w) => w,
                     Err(_) => {
-                        error!(
-                            "Failed to get node health status from address: {}",
-                            node.address
-                        );
-                        self.available_nodes -= 1;
+                        error!(target: "error_logger","Failed to get node health status from address: {}",node.address);
                         remove_nodes.push(i);
                         continue;
                     }
