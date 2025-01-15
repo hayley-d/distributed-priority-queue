@@ -294,12 +294,12 @@ pub mod load_balancer {
                     let enqueue_request: EnqueueRequest = match self.buffer.pop_front() {
                         Some(r) => r,
                         None => {
-                            error!("Buffer is empty");
+                            error!(target: "error_logger","Buffer is empty");
                             return Err(Box::new(RpcError::FailedRequest));
                         }
                     };
 
-                    info!("Job Service Request to address {}", node.address);
+                    info!(target:"request_logger","Job Service Request to address {}", node.address);
 
                     let mut client: JobServiceClient<Channel> =
                         JobServiceClient::connect(node.address.clone()).await?;
