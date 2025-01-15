@@ -36,6 +36,7 @@ pub mod load_balancer {
             self.weight == other.weight && self.address == other.address
         }
     }
+
     impl PartialOrd for Node {
         fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
             Some(self.cmp(&other))
@@ -53,7 +54,14 @@ pub mod load_balancer {
     }
 
     impl Node {
-        /// Creates a new node using the provided addess and weighting
+        /// Creates a new node
+        ///
+        /// # Arguments
+        /// `address`: The url address of the node.
+        /// `weight`: The calculated weight of the node.
+        ///
+        /// # Returns
+        /// A new node.
         pub fn new(address: String, weight: f32) -> Self {
             return Node { address, weight };
         }
