@@ -1,8 +1,9 @@
 #[allow(dead_code)]
 pub mod load_balancer {
-    use crate::job_management::job_service_client::JobServiceClient;
-    use crate::job_management::node_health_service_client::NodeHealthServiceClient;
-    use crate::job_management::{EnqueueRequest, NodeHealthRequest};
+    use crate::job_management::{
+        job_service_client::JobServiceClient, node_health_service_client::NodeHealthServiceClient,
+        EnqueueRequest, NodeHealthRequest,
+    };
     use log::{error, info};
     use std::collections::VecDeque;
     use std::fmt::Display;
@@ -38,7 +39,7 @@ pub mod load_balancer {
 
     impl PartialOrd for Node {
         fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-            Some(self.cmp(&other))
+            Some(self.cmp(other))
         }
     }
 
@@ -104,7 +105,7 @@ pub mod load_balancer {
             let mut weights: Vec<f32> = Vec::with_capacity(addresses.len());
 
             for (i, address) in addresses.clone().iter().enumerate() {
-                let weight: f32 = match Self::get_weight(&address).await {
+                let weight: f32 = match Self::get_weight(address).await {
                     Ok(w) => w,
                     Err(_) => {
                         error!(target: "error_logger","Failed to get response for node health from address: {}",address);
@@ -126,7 +127,7 @@ pub mod load_balancer {
                 nodes.push(Node::new(addresses[i].clone(), *weight));
             }
 
-            nodes.sort_by(|a, b| b.cmp(&a));
+            nodes.sort_by(|a, b| b.cmp(a));
 
             Ok(LoadBalancer {
                 buffer: VecDeque::new(),
@@ -252,7 +253,7 @@ pub mod load_balancer {
 
             match response {
                 Ok(res) => {
-                    let res = res.into_inner().clone();
+                    let res = res.into_inner();
                     let (cpu_utilization, memory_usage, queue_depth, _) = (
                         &res.cpu_utilization,
                         &res.memory_usage,
