@@ -144,12 +144,12 @@ pub mod load_balancer {
             let weight = match Self::get_weight(&address).await {
                 Ok(w) => w,
                 Err(_) => {
-                    error!("Failed to get node health status from address: {}", address);
+                    error!(target: "error_logger","Failed to get node health status from address: {}", address);
                     return;
                 }
             };
 
-            let mut weights: Vec<f32> = Vec::with_capacity(self.available_nodes as usize + 1);
+            let mut weights: Vec<f32> = Vec::with_capacity(self.nodes.len() + 1);
 
             let mut remove_nodes: Vec<usize> = Vec::new();
             for (i, node) in self.nodes.iter().enumerate() {
