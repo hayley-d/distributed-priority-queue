@@ -1,6 +1,7 @@
 pub mod api;
-pub mod db;
 pub mod error;
 pub mod grpc;
-pub mod job_management;
+pub mod job_management {
+    include!("proto/job_management.rs");
+}
 pub mod min_heap;

@@ -1,7 +1,5 @@
 use crate::job_management::paxos_service_server::PaxosService;
-use crate::job_management::{
-    Job, PaxosAccept, PaxosCommit, PaxosCommitResponse, PaxosPrepare, PaxosPromise, PaxosPropose,
-};
+use crate::job_management::{Job, PaxosAccept, PaxosAck, PaxosPrepare, PaxosPromise};
 use crate::min_heap::MinHeap;
 use log::{error, info};
 use std::sync::Arc;
@@ -89,10 +87,7 @@ impl PaxosService for LocalPaxosService {
         }
     }
 
-    async fn propose(
-        &self,
-        request: Request<PaxosPropose>,
-    ) -> Result<Response<PaxosAccept>, Status> {
+    async fn propose(&self, request: Request<PaxosAccept>) -> Result<Response<PaxosAck>, Status> {
         let mut state = self.state.lock().await;
         let propose = request.into_inner();
         info!(
@@ -110,9 +105,8 @@ impl PaxosService for LocalPaxosService {
                 }
             };
 
-            Ok(Response::new(PaxosAccept {
+            Ok(Response::new(PaxosAck {
                 proposal_number: propose.proposal_number,
-                accepted: true,
             }))
         } else {
             error!("Failed Paxos proposal: proposal number was less than promised");
