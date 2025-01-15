@@ -129,14 +129,17 @@ pub mod load_balancer {
 
             nodes.sort_by(|a, b| b.cmp(&a));
 
-            return Ok(LoadBalancer {
+            Ok(LoadBalancer {
                 buffer: VecDeque::new(),
                 nodes,
-                available_nodes,
                 lamport_timestamp: 0,
-            });
+            })
         }
 
+        /// Adds a node to the load balancer
+        ///
+        /// # Arguments
+        /// `address`: The url address of the node.
         async fn add_node(&mut self, address: String) {
             let weight = match Self::get_weight(&address).await {
                 Ok(w) => w,
