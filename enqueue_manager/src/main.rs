@@ -1,12 +1,12 @@
-use std::sync::Arc;
-
 use enqueue_manager::job_management::EnqueueRequest;
 use enqueue_manager::load_balancer::load_balancer::LoadBalancer;
 use enqueue_manager::manager_state::ManagerState;
+use log::error;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{Build, Rocket};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use tokio::sync::Mutex;
 
 #[macro_use]
@@ -21,7 +21,7 @@ async fn rocket() -> Rocket<Build> {
     let load_balancer: LoadBalancer = match LoadBalancer::new(&mut nodes).await {
         Ok(lb) => lb,
         Err(_) => {
-            error!(target: "error_logger","Failed to start server, issue creating load balancer");
+            error!(target:"error_logger", "Failed to start server, issue creating load balancer");
             std::process::exit(1);
         }
     };
@@ -60,7 +60,7 @@ pub async fn enqueue(
     state.increment_time();
     load_bal.insert(enqueue_request);
 
-    return Ok(Json(EnqueueResponse {
-        message: format!("Job successfully added to queue"),
-    }));
+    Ok(Json(EnqueueResponse {
+        message: "Job successfully added to queue".to_string(),
+    }))
 }
