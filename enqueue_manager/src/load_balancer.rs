@@ -14,6 +14,7 @@ pub mod load_balancer {
     /// `address` is url address of the replica to recieved gRPC requests
     /// `weight` is the calculated weight for the node based on CPU utilization, memory usage,queue
     /// depth and response time
+    #[derive(Debug)]
     pub struct Node {
         address: String,
         weight: f32,
