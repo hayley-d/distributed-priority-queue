@@ -74,11 +74,11 @@ pub mod load_balancer {
     pub struct LoadBalancer {
         buffer: VecDeque<EnqueueRequest>,
         nodes: Vec<Node>,
-        available_nodes: u32,
         lamport_timestamp: u64,
     }
 
     impl LoadBalancer {
+        /// Increments the logical clock of the load balancer and returns the current clock count.
         pub fn increment_time(&mut self) -> u64 {
             let temp = self.lamport_timestamp;
             self.lamport_timestamp += 1;
