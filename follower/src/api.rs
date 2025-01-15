@@ -48,6 +48,9 @@ use tokio_postgres::Client;
 ///
 
 /// DequeueResponse represents the response sent by the node when the /dequeue route is used.
+/// `job_id`: The randomly generated job_id
+/// `priority`: The assigned priority of the job.
+/// `payload': the byte payload the job contains.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DequeueResponse {
     job_id: i64,
