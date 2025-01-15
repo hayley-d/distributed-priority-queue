@@ -62,7 +62,7 @@ impl MinHeap {
     }
 
     /// Inserts a new job into the min heap.
-    pub fn insert(&mut self, priority: u32, job_id: u64, timestamp: u64) {
+    pub fn insert(&mut self, priority: u32, job_id: Uuid, timestamp: u64) {
         let node: HeapNode = HeapNode::new(job_id, priority, timestamp);
         self.heap.push_back(node);
         println!("Starting at index {}", self.heap.len() - 1);
@@ -90,7 +90,7 @@ impl MinHeap {
                     return;
                 }
                 let parent: usize = ((i - 1) as f64 / 2.0).floor() as usize;
-                let mut temp: HeapNode = HeapNode::new(0, 0, 0);
+                let mut temp: HeapNode = HeapNode::new(Uuid::new_v4(), 0, 0);
                 mem::swap(&mut self.heap[i], &mut temp);
                 mem::swap(&mut temp, &mut self.heap[parent]);
                 mem::swap(&mut self.heap[i], &mut temp);
@@ -135,7 +135,7 @@ impl MinHeap {
         }
 
         if index != min {
-            let mut temp: HeapNode = HeapNode::new(0, 0, 0);
+            let mut temp: HeapNode = HeapNode::new(Uuid::new_v4(), 0, 0);
             mem::swap(&mut self.heap[index], &mut temp);
             mem::swap(&mut temp, &mut self.heap[min]);
             mem::swap(&mut self.heap[index], &mut temp);
@@ -154,7 +154,7 @@ impl MinHeap {
             return self.heap.pop_front();
         }
 
-        let mut top: HeapNode = HeapNode::new(0, 0, 0);
+        let mut top: HeapNode = HeapNode::new(Uuid::new_v4(), 0, 0);
         //let last = self.heap.pop_back().unwrap();
         //self.heap.push_front(last);
 
@@ -173,7 +173,7 @@ impl MinHeap {
     }
 
     /// Changes the priority of a `HeapNode` in the min heap.
-    pub fn change_priority(&mut self, job_id: u64, new_priority: u32) -> bool {
+    pub fn change_priority(&mut self, job_id: Uuid, new_priority: u32) -> bool {
         let target_index = match self.heap.iter().position(|n| n.job_id == job_id) {
             Some(i) => i,
             None => return false,
@@ -255,7 +255,7 @@ impl MinHeap {
 
             if min != index {
                 //swap
-                let mut temp: HeapNode = HeapNode::new(0, 0, 0);
+                let mut temp: HeapNode = HeapNode::new(Uuid::new_v4(), 0, 0);
                 mem::swap(&mut self.heap[index], &mut temp);
                 mem::swap(&mut temp, &mut self.heap[min]);
                 mem::swap(&mut self.heap[index], &mut temp);
@@ -268,39 +268,52 @@ impl MinHeap {
 
 #[cfg(test)]
 mod tests {
+    use uuid::Uuid;
+
     use super::{HeapNode, MinHeap};
 
     #[test]
     fn test_heap_insert() {
         let mut min_heap: MinHeap = MinHeap::new(0.5);
         // priority,job_id
-        min_heap.insert(5, 1, 0);
-        assert_eq!(min_heap.heap, vec![HeapNode::new(1, 5, 0)]);
+        let ids: Vec<Uuid> = vec![
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+        ];
 
-        min_heap.insert(3, 2, 1);
+        min_heap.insert(5, ids[0], 0);
+        assert_eq!(min_heap.heap, vec![HeapNode::new(ids[0], 5, 0)]);
+
+        min_heap.insert(3, ids[1], 1);
         assert_eq!(
             min_heap.heap,
-            vec![HeapNode::new(2, 3, 1), HeapNode::new(1, 5, 0)]
+            vec![HeapNode::new(ids[1], 3, 1), HeapNode::new(ids[0], 5, 0)]
         );
 
-        min_heap.insert(2, 3, 2);
+        min_heap.insert(2, ids[2], 2);
         assert_eq!(
             min_heap.heap,
             vec![
-                HeapNode::new(3, 2, 2),
-                HeapNode::new(1, 5, 0),
-                HeapNode::new(2, 3, 1)
+                HeapNode::new(ids[2], 2, 2),
+                HeapNode::new(ids[0], 5, 0),
+                HeapNode::new(ids[1], 3, 1)
             ]
         );
 
-        min_heap.insert(1, 4, 3);
+        min_heap.insert(1, ids[3], 3);
         assert_eq!(
             min_heap.heap,
             vec![
-                HeapNode::new(4, 1, 3),
-                HeapNode::new(3, 2, 2),
-                HeapNode::new(2, 3, 1),
-                HeapNode::new(1, 5, 0)
+                HeapNode::new(ids[3], 1, 3),
+                HeapNode::new(ids[2], 2, 2),
+                HeapNode::new(ids[1], 3, 1),
+                HeapNode::new(ids[0], 5, 0)
             ]
         );
 
