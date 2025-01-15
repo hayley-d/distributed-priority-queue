@@ -27,16 +27,16 @@ impl ManagerState {
             }
         };
 
-        return Arc::new(Mutex::new(ManagerState {
+        Arc::new(Mutex::new(ManagerState {
             lamport_timestamp: 0,
             manager_id,
             nodes,
-        }));
+        }))
     }
 
     pub fn increment_time(&mut self) -> i64 {
         let temp: i64 = self.lamport_timestamp;
         self.lamport_timestamp += 1;
-        return temp;
+        temp
     }
 }
