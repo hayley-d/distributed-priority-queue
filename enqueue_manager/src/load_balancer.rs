@@ -1,14 +1,13 @@
 #[allow(dead_code)]
 pub mod load_balancer {
+    use crate::job_management::job_service_client::JobServiceClient;
+    use crate::job_management::node_health_service_client::NodeHealthServiceClient;
+    use crate::job_management::{EnqueueRequest, NodeHealthRequest};
     use log::{error, info};
     use std::collections::VecDeque;
     use std::fmt::Display;
     use tokio::time::{timeout, Duration};
     use tonic::transport::Channel;
-
-    use crate::job_management::job_service_client::JobServiceClient;
-    use crate::job_management::node_health_service_client::NodeHealthServiceClient;
-    use crate::job_management::{EnqueueRequest, Job, NodeHealthRequest};
 
     /// Node represents a replica in the distributed system
     /// `address` is url address of the replica to recieved gRPC requests
