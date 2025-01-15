@@ -17,12 +17,12 @@ impl ManagerState {
             Some(id) => match id.parse::<i32>() {
                 Ok(i) => i,
                 Err(_) => {
-                    error!("Failed to parse manager id: Manager id must be of type u64");
+                    error!(target:"error_logger","Failed to parse manager id: Manager id must be of type u64");
                     std::process::exit(1);
                 }
             },
             None => {
-                error!("No manager id provided in command line arguments: could not start server");
+                error!(target:"error_logger","No manager id provided in command line arguments: could not start server");
                 std::process::exit(1);
             }
         };
