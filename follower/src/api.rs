@@ -8,45 +8,6 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio_postgres::Client;
 
-/// Contains the API routes for the [distributed_queue_node] in the [distributed priority queue].
-///
-/// The node contains the following API routes:
-///
-/// GET /dequeue
-/// Used to pop the job with the highest priority from the priority queue.
-///
-/// Example Response
-/// ```json
-/// {
-///     "job_id" : 123,
-///     "priority" : 1,
-///     "payload" : [1,1,1,1]
-/// }
-/// ```
-/// GET /dequeue/<amount>
-/// Used to pop <amount> jobs from the priority queue.
-///
-/// Example Response
-/// ```json
-/// {
-///     [
-///         {"job_id":123,"priority":1,"payload":[]},
-///         {"job_id":124,"priority":2,"payload":[]}   
-///     ]
-/// }
-/// ```
-/// POST /enqueue
-/// Enqueues a job to the priority queue.
-///
-/// Example Request:
-/// ```json
-/// {
-///     "priority" : 1,
-///     "payload" : [],
-/// }
-/// ```
-///
-
 /// DequeueResponse represents the response sent by the node when the /dequeue route is used.
 /// `job_id`: The randomly generated job_id
 /// `priority`: The assigned priority of the job.
@@ -60,6 +21,7 @@ pub struct DequeueResponse {
 
 /// BatchDequeueResponse represents the response sent by the node when the /dequeue/<amount> route
 /// is used.
+/// `jobs`: The array containing the jobs dequeued.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct BatchDequeueResponse {
     jobs: Vec<DequeueResponse>,
