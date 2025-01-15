@@ -2,8 +2,8 @@
 /// Job structure
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Job {
-    #[prost(int64, tag = "1")]
-    pub job_id: i64,
+    #[prost(string, tag = "1")]
+    pub job_id: ::prost::alloc::string::String,
     #[prost(int32, tag = "2")]
     pub priority: i32,
     #[prost(bytes = "vec", tag = "3")]
@@ -18,10 +18,10 @@ pub struct EnqueueRequest {
     pub payload: ::prost::alloc::vec::Vec<u8>,
 }
 /// Request for getting a task
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct JobRequest {
-    #[prost(int64, tag = "1")]
-    pub job_id: i64,
+    #[prost(string, tag = "1")]
+    pub job_id: ::prost::alloc::string::String,
 }
 /// Response containing task data
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -29,47 +29,33 @@ pub struct JobResponse {
     #[prost(message, optional, tag = "1")]
     pub job: ::core::option::Option<Job>,
 }
-/// Paxos messages
+/// Paxos Prepare message sent from proposer to acceptor
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct PaxosPrepare {
-    /// a unique identifier for current proposal
     #[prost(int32, tag = "1")]
     pub proposal_number: i32,
 }
+/// Paxos Promise message sent from the acceptor to the proposer
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct PaxosPromise {
-    /// Proposal number being accepted
     #[prost(int32, tag = "1")]
     pub proposal_number: i32,
     #[prost(int32, tag = "2")]
-    pub accepted_value: i32,
+    pub highest_proposal: i32,
+    #[prost(bool, tag = "3")]
+    pub promise: bool,
 }
 /// Sent from the leader to the follower
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct PaxosPropose {
+pub struct PaxosAccept {
     #[prost(int32, tag = "1")]
     pub proposal_number: i32,
     #[prost(message, optional, tag = "2")]
     pub proposed_job: ::core::option::Option<Job>,
 }
-/// Sent from the follower to the leader
+/// Sent from the follower to the leader to acknowledge the accept message
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
-pub struct PaxosAccept {
-    #[prost(int32, tag = "1")]
-    pub proposal_number: i32,
-    #[prost(bool, tag = "2")]
-    pub accepted: bool,
-}
-/// Sent from the leader to the follower
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
-pub struct PaxosCommit {
-    #[prost(int32, tag = "1")]
-    pub proposal_number: i32,
-    #[prost(bool, tag = "2")]
-    pub commit: bool,
-}
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
-pub struct PaxosCommitResponse {
+pub struct PaxosAck {
     #[prost(int32, tag = "1")]
     pub proposal_number: i32,
 }
@@ -471,8 +457,8 @@ pub mod paxos_service_client {
         }
         pub async fn propose(
             &mut self,
-            request: impl tonic::IntoRequest<super::PaxosPropose>,
-        ) -> std::result::Result<tonic::Response<super::PaxosAccept>, tonic::Status> {
+            request: impl tonic::IntoRequest<super::PaxosAccept>,
+        ) -> std::result::Result<tonic::Response<super::PaxosAck>, tonic::Status> {
             self.inner
                 .ready()
                 .await
@@ -488,30 +474,6 @@ pub mod paxos_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("job_management.PaxosService", "Propose"));
-            self.inner.unary(req, path, codec).await
-        }
-        pub async fn commit(
-            &mut self,
-            request: impl tonic::IntoRequest<super::PaxosCommit>,
-        ) -> std::result::Result<
-            tonic::Response<super::PaxosCommitResponse>,
-            tonic::Status,
-        > {
-            self.inner
-                .ready()
-                .await
-                .map_err(|e| {
-                    tonic::Status::unknown(
-                        format!("Service was not ready: {}", e.into()),
-                    )
-                })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static(
-                "/job_management.PaxosService/Commit",
-            );
-            let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("job_management.PaxosService", "Commit"));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -1055,15 +1017,8 @@ pub mod paxos_service_server {
         ) -> std::result::Result<tonic::Response<super::PaxosPromise>, tonic::Status>;
         async fn propose(
             &self,
-            request: tonic::Request<super::PaxosPropose>,
-        ) -> std::result::Result<tonic::Response<super::PaxosAccept>, tonic::Status>;
-        async fn commit(
-            &self,
-            request: tonic::Request<super::PaxosCommit>,
-        ) -> std::result::Result<
-            tonic::Response<super::PaxosCommitResponse>,
-            tonic::Status,
-        >;
+            request: tonic::Request<super::PaxosAccept>,
+        ) -> std::result::Result<tonic::Response<super::PaxosAck>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct PaxosServiceServer<T> {
@@ -1189,18 +1144,16 @@ pub mod paxos_service_server {
                 "/job_management.PaxosService/Propose" => {
                     #[allow(non_camel_case_types)]
                     struct ProposeSvc<T: PaxosService>(pub Arc<T>);
-                    impl<
-                        T: PaxosService,
-                    > tonic::server::UnaryService<super::PaxosPropose>
+                    impl<T: PaxosService> tonic::server::UnaryService<super::PaxosAccept>
                     for ProposeSvc<T> {
-                        type Response = super::PaxosAccept;
+                        type Response = super::PaxosAck;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
                             tonic::Status,
                         >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::PaxosPropose>,
+                            request: tonic::Request<super::PaxosAccept>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
@@ -1216,49 +1169,6 @@ pub mod paxos_service_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = ProposeSvc(inner);
-                        let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec)
-                            .apply_compression_config(
-                                accept_compression_encodings,
-                                send_compression_encodings,
-                            )
-                            .apply_max_message_size_config(
-                                max_decoding_message_size,
-                                max_encoding_message_size,
-                            );
-                        let res = grpc.unary(method, req).await;
-                        Ok(res)
-                    };
-                    Box::pin(fut)
-                }
-                "/job_management.PaxosService/Commit" => {
-                    #[allow(non_camel_case_types)]
-                    struct CommitSvc<T: PaxosService>(pub Arc<T>);
-                    impl<T: PaxosService> tonic::server::UnaryService<super::PaxosCommit>
-                    for CommitSvc<T> {
-                        type Response = super::PaxosCommitResponse;
-                        type Future = BoxFuture<
-                            tonic::Response<Self::Response>,
-                            tonic::Status,
-                        >;
-                        fn call(
-                            &mut self,
-                            request: tonic::Request<super::PaxosCommit>,
-                        ) -> Self::Future {
-                            let inner = Arc::clone(&self.0);
-                            let fut = async move {
-                                <T as PaxosService>::commit(&inner, request).await
-                            };
-                            Box::pin(fut)
-                        }
-                    }
-                    let accept_compression_encodings = self.accept_compression_encodings;
-                    let send_compression_encodings = self.send_compression_encodings;
-                    let max_decoding_message_size = self.max_decoding_message_size;
-                    let max_encoding_message_size = self.max_encoding_message_size;
-                    let inner = self.inner.clone();
-                    let fut = async move {
-                        let method = CommitSvc(inner);
                         let codec = tonic::codec::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

@@ -2,8 +2,8 @@
 /// Job structure
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct Job {
-    #[prost(int64, tag = "1")]
-    pub job_id: i64,
+    #[prost(string, tag = "1")]
+    pub job_id: ::prost::alloc::string::String,
     #[prost(int32, tag = "2")]
     pub priority: i32,
     #[prost(bytes = "vec", tag = "3")]
@@ -18,10 +18,10 @@ pub struct EnqueueRequest {
     pub payload: ::prost::alloc::vec::Vec<u8>,
 }
 /// Request for getting a task
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+#[derive(Clone, PartialEq, ::prost::Message)]
 pub struct JobRequest {
-    #[prost(int64, tag = "1")]
-    pub job_id: i64,
+    #[prost(string, tag = "1")]
+    pub job_id: ::prost::alloc::string::String,
 }
 /// Response containing task data
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -29,47 +29,33 @@ pub struct JobResponse {
     #[prost(message, optional, tag = "1")]
     pub job: ::core::option::Option<Job>,
 }
-/// Paxos messages
+/// Paxos Prepare message sent from proposer to acceptor
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct PaxosPrepare {
-    /// a unique identifier for current proposal
     #[prost(int32, tag = "1")]
     pub proposal_number: i32,
 }
+/// Paxos Promise message sent from the acceptor to the proposer
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct PaxosPromise {
-    /// Proposal number being accepted
     #[prost(int32, tag = "1")]
     pub proposal_number: i32,
     #[prost(int32, tag = "2")]
-    pub accepted_value: i32,
+    pub highest_proposal: i32,
+    #[prost(bool, tag = "3")]
+    pub promise: bool,
 }
 /// Sent from the leader to the follower
 #[derive(Clone, PartialEq, ::prost::Message)]
-pub struct PaxosPropose {
+pub struct PaxosAccept {
     #[prost(int32, tag = "1")]
     pub proposal_number: i32,
     #[prost(message, optional, tag = "2")]
     pub proposed_job: ::core::option::Option<Job>,
 }
-/// Sent from the follower to the leader
+/// Sent from the follower to the leader to acknowledge the accept message
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
-pub struct PaxosAccept {
-    #[prost(int32, tag = "1")]
-    pub proposal_number: i32,
-    #[prost(bool, tag = "2")]
-    pub accepted: bool,
-}
-/// Sent from the leader to the follower
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
-pub struct PaxosCommit {
-    #[prost(int32, tag = "1")]
-    pub proposal_number: i32,
-    #[prost(bool, tag = "2")]
-    pub commit: bool,
-}
-#[derive(Clone, Copy, PartialEq, ::prost::Message)]
-pub struct PaxosCommitResponse {
+pub struct PaxosAck {
     #[prost(int32, tag = "1")]
     pub proposal_number: i32,
 }
@@ -111,10 +97,10 @@ pub mod job_service_client {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value
+        clippy::let_unit_value,
     )]
-    use tonic::codegen::http::Uri;
     use tonic::codegen::*;
+    use tonic::codegen::http::Uri;
     /// Service definition for Job management and Paxos protocol
     #[derive(Debug, Clone)]
     pub struct JobServiceClient<T> {
@@ -159,8 +145,9 @@ pub mod job_service_client {
                     <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
                 >,
             >,
-            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
-                Into<StdError> + std::marker::Send + std::marker::Sync,
+            <T as tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             JobServiceClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -199,12 +186,18 @@ pub mod job_service_client {
             &mut self,
             request: impl tonic::IntoRequest<super::EnqueueRequest>,
         ) -> std::result::Result<tonic::Response<super::Job>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
-            })?;
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path =
-                http::uri::PathAndQuery::from_static("/job_management.JobService/EnqueueJob");
+            let path = http::uri::PathAndQuery::from_static(
+                "/job_management.JobService/EnqueueJob",
+            );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("job_management.JobService", "EnqueueJob"));
@@ -214,11 +207,18 @@ pub mod job_service_client {
             &mut self,
             request: impl tonic::IntoRequest<super::JobRequest>,
         ) -> std::result::Result<tonic::Response<super::JobResponse>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
-            })?;
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/job_management.JobService/GetTask");
+            let path = http::uri::PathAndQuery::from_static(
+                "/job_management.JobService/GetTask",
+            );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("job_management.JobService", "GetTask"));
@@ -233,10 +233,10 @@ pub mod long_polling_service_client {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value
+        clippy::let_unit_value,
     )]
-    use tonic::codegen::http::Uri;
     use tonic::codegen::*;
+    use tonic::codegen::http::Uri;
     #[derive(Debug, Clone)]
     pub struct LongPollingServiceClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -280,8 +280,9 @@ pub mod long_polling_service_client {
                     <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
                 >,
             >,
-            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
-                Into<StdError> + std::marker::Send + std::marker::Sync,
+            <T as tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             LongPollingServiceClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -319,13 +320,22 @@ pub mod long_polling_service_client {
         pub async fn poll(
             &mut self,
             request: impl tonic::IntoRequest<super::PollJobRequest>,
-        ) -> std::result::Result<tonic::Response<super::PollJobResponse>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
-            })?;
+        ) -> std::result::Result<
+            tonic::Response<super::PollJobResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path =
-                http::uri::PathAndQuery::from_static("/job_management.LongPollingService/Poll");
+            let path = http::uri::PathAndQuery::from_static(
+                "/job_management.LongPollingService/Poll",
+            );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("job_management.LongPollingService", "Poll"));
@@ -340,10 +350,10 @@ pub mod paxos_service_client {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value
+        clippy::let_unit_value,
     )]
-    use tonic::codegen::http::Uri;
     use tonic::codegen::*;
+    use tonic::codegen::http::Uri;
     #[derive(Debug, Clone)]
     pub struct PaxosServiceClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -387,8 +397,9 @@ pub mod paxos_service_client {
                     <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
                 >,
             >,
-            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
-                Into<StdError> + std::marker::Send + std::marker::Sync,
+            <T as tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             PaxosServiceClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -427,11 +438,18 @@ pub mod paxos_service_client {
             &mut self,
             request: impl tonic::IntoRequest<super::PaxosPrepare>,
         ) -> std::result::Result<tonic::Response<super::PaxosPromise>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
-            })?;
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/job_management.PaxosService/Prepare");
+            let path = http::uri::PathAndQuery::from_static(
+                "/job_management.PaxosService/Prepare",
+            );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("job_management.PaxosService", "Prepare"));
@@ -439,31 +457,23 @@ pub mod paxos_service_client {
         }
         pub async fn propose(
             &mut self,
-            request: impl tonic::IntoRequest<super::PaxosPropose>,
-        ) -> std::result::Result<tonic::Response<super::PaxosAccept>, tonic::Status> {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
-            })?;
+            request: impl tonic::IntoRequest<super::PaxosAccept>,
+        ) -> std::result::Result<tonic::Response<super::PaxosAck>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
             let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/job_management.PaxosService/Propose");
+            let path = http::uri::PathAndQuery::from_static(
+                "/job_management.PaxosService/Propose",
+            );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("job_management.PaxosService", "Propose"));
-            self.inner.unary(req, path, codec).await
-        }
-        pub async fn commit(
-            &mut self,
-            request: impl tonic::IntoRequest<super::PaxosCommit>,
-        ) -> std::result::Result<tonic::Response<super::PaxosCommitResponse>, tonic::Status>
-        {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
-            })?;
-            let codec = tonic::codec::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/job_management.PaxosService/Commit");
-            let mut req = request.into_request();
-            req.extensions_mut()
-                .insert(GrpcMethod::new("job_management.PaxosService", "Commit"));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -475,10 +485,10 @@ pub mod node_health_service_client {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value
+        clippy::let_unit_value,
     )]
-    use tonic::codegen::http::Uri;
     use tonic::codegen::*;
+    use tonic::codegen::http::Uri;
     #[derive(Debug, Clone)]
     pub struct NodeHealthServiceClient<T> {
         inner: tonic::client::Grpc<T>,
@@ -522,8 +532,9 @@ pub mod node_health_service_client {
                     <T as tonic::client::GrpcService<tonic::body::BoxBody>>::ResponseBody,
                 >,
             >,
-            <T as tonic::codegen::Service<http::Request<tonic::body::BoxBody>>>::Error:
-                Into<StdError> + std::marker::Send + std::marker::Sync,
+            <T as tonic::codegen::Service<
+                http::Request<tonic::body::BoxBody>,
+            >>::Error: Into<StdError> + std::marker::Send + std::marker::Sync,
         {
             NodeHealthServiceClient::new(InterceptedService::new(inner, interceptor))
         }
@@ -561,20 +572,27 @@ pub mod node_health_service_client {
         pub async fn get_node_health(
             &mut self,
             request: impl tonic::IntoRequest<super::NodeHealthRequest>,
-        ) -> std::result::Result<tonic::Response<super::NodeHealthResponse>, tonic::Status>
-        {
-            self.inner.ready().await.map_err(|e| {
-                tonic::Status::unknown(format!("Service was not ready: {}", e.into()))
-            })?;
+        ) -> std::result::Result<
+            tonic::Response<super::NodeHealthResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
             let codec = tonic::codec::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
                 "/job_management.NodeHealthService/GetNodeHealth",
             );
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new(
-                "job_management.NodeHealthService",
-                "GetNodeHealth",
-            ));
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("job_management.NodeHealthService", "GetNodeHealth"),
+                );
             self.inner.unary(req, path, codec).await
         }
     }
@@ -586,7 +604,7 @@ pub mod job_service_server {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value
+        clippy::let_unit_value,
     )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with JobServiceServer.
@@ -623,7 +641,10 @@ pub mod job_service_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -678,9 +699,15 @@ pub mod job_service_server {
                 "/job_management.JobService/EnqueueJob" => {
                     #[allow(non_camel_case_types)]
                     struct EnqueueJobSvc<T: JobService>(pub Arc<T>);
-                    impl<T: JobService> tonic::server::UnaryService<super::EnqueueRequest> for EnqueueJobSvc<T> {
+                    impl<
+                        T: JobService,
+                    > tonic::server::UnaryService<super::EnqueueRequest>
+                    for EnqueueJobSvc<T> {
                         type Response = super::Job;
-                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::EnqueueRequest>,
@@ -717,16 +744,21 @@ pub mod job_service_server {
                 "/job_management.JobService/GetTask" => {
                     #[allow(non_camel_case_types)]
                     struct GetTaskSvc<T: JobService>(pub Arc<T>);
-                    impl<T: JobService> tonic::server::UnaryService<super::JobRequest> for GetTaskSvc<T> {
+                    impl<T: JobService> tonic::server::UnaryService<super::JobRequest>
+                    for GetTaskSvc<T> {
                         type Response = super::JobResponse;
-                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::JobRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut =
-                                async move { <T as JobService>::get_task(&inner, request).await };
+                            let fut = async move {
+                                <T as JobService>::get_task(&inner, request).await
+                            };
                             Box::pin(fut)
                         }
                     }
@@ -752,19 +784,23 @@ pub mod job_service_server {
                     };
                     Box::pin(fut)
                 }
-                _ => Box::pin(async move {
-                    let mut response = http::Response::new(empty_body());
-                    let headers = response.headers_mut();
-                    headers.insert(
-                        tonic::Status::GRPC_STATUS,
-                        (tonic::Code::Unimplemented as i32).into(),
-                    );
-                    headers.insert(
-                        http::header::CONTENT_TYPE,
-                        tonic::metadata::GRPC_CONTENT_TYPE,
-                    );
-                    Ok(response)
-                }),
+                _ => {
+                    Box::pin(async move {
+                        let mut response = http::Response::new(empty_body());
+                        let headers = response.headers_mut();
+                        headers
+                            .insert(
+                                tonic::Status::GRPC_STATUS,
+                                (tonic::Code::Unimplemented as i32).into(),
+                            );
+                        headers
+                            .insert(
+                                http::header::CONTENT_TYPE,
+                                tonic::metadata::GRPC_CONTENT_TYPE,
+                            );
+                        Ok(response)
+                    })
+                }
             }
         }
     }
@@ -793,7 +829,7 @@ pub mod long_polling_service_server {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value
+        clippy::let_unit_value,
     )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with LongPollingServiceServer.
@@ -825,7 +861,10 @@ pub mod long_polling_service_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -880,9 +919,14 @@ pub mod long_polling_service_server {
                 "/job_management.LongPollingService/Poll" => {
                     #[allow(non_camel_case_types)]
                     struct PollSvc<T: LongPollingService>(pub Arc<T>);
-                    impl<T: LongPollingService> tonic::server::UnaryService<super::PollJobRequest> for PollSvc<T> {
+                    impl<
+                        T: LongPollingService,
+                    > tonic::server::UnaryService<super::PollJobRequest> for PollSvc<T> {
                         type Response = super::PollJobResponse;
-                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::PollJobRequest>,
@@ -916,19 +960,23 @@ pub mod long_polling_service_server {
                     };
                     Box::pin(fut)
                 }
-                _ => Box::pin(async move {
-                    let mut response = http::Response::new(empty_body());
-                    let headers = response.headers_mut();
-                    headers.insert(
-                        tonic::Status::GRPC_STATUS,
-                        (tonic::Code::Unimplemented as i32).into(),
-                    );
-                    headers.insert(
-                        http::header::CONTENT_TYPE,
-                        tonic::metadata::GRPC_CONTENT_TYPE,
-                    );
-                    Ok(response)
-                }),
+                _ => {
+                    Box::pin(async move {
+                        let mut response = http::Response::new(empty_body());
+                        let headers = response.headers_mut();
+                        headers
+                            .insert(
+                                tonic::Status::GRPC_STATUS,
+                                (tonic::Code::Unimplemented as i32).into(),
+                            );
+                        headers
+                            .insert(
+                                http::header::CONTENT_TYPE,
+                                tonic::metadata::GRPC_CONTENT_TYPE,
+                            );
+                        Ok(response)
+                    })
+                }
             }
         }
     }
@@ -957,7 +1005,7 @@ pub mod paxos_service_server {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value
+        clippy::let_unit_value,
     )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with PaxosServiceServer.
@@ -969,12 +1017,8 @@ pub mod paxos_service_server {
         ) -> std::result::Result<tonic::Response<super::PaxosPromise>, tonic::Status>;
         async fn propose(
             &self,
-            request: tonic::Request<super::PaxosPropose>,
-        ) -> std::result::Result<tonic::Response<super::PaxosAccept>, tonic::Status>;
-        async fn commit(
-            &self,
-            request: tonic::Request<super::PaxosCommit>,
-        ) -> std::result::Result<tonic::Response<super::PaxosCommitResponse>, tonic::Status>;
+            request: tonic::Request<super::PaxosAccept>,
+        ) -> std::result::Result<tonic::Response<super::PaxosAck>, tonic::Status>;
     }
     #[derive(Debug)]
     pub struct PaxosServiceServer<T> {
@@ -997,7 +1041,10 @@ pub mod paxos_service_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -1052,16 +1099,23 @@ pub mod paxos_service_server {
                 "/job_management.PaxosService/Prepare" => {
                     #[allow(non_camel_case_types)]
                     struct PrepareSvc<T: PaxosService>(pub Arc<T>);
-                    impl<T: PaxosService> tonic::server::UnaryService<super::PaxosPrepare> for PrepareSvc<T> {
+                    impl<
+                        T: PaxosService,
+                    > tonic::server::UnaryService<super::PaxosPrepare>
+                    for PrepareSvc<T> {
                         type Response = super::PaxosPromise;
-                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::PaxosPrepare>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut =
-                                async move { <T as PaxosService>::prepare(&inner, request).await };
+                            let fut = async move {
+                                <T as PaxosService>::prepare(&inner, request).await
+                            };
                             Box::pin(fut)
                         }
                     }
@@ -1090,16 +1144,21 @@ pub mod paxos_service_server {
                 "/job_management.PaxosService/Propose" => {
                     #[allow(non_camel_case_types)]
                     struct ProposeSvc<T: PaxosService>(pub Arc<T>);
-                    impl<T: PaxosService> tonic::server::UnaryService<super::PaxosPropose> for ProposeSvc<T> {
-                        type Response = super::PaxosAccept;
-                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                    impl<T: PaxosService> tonic::server::UnaryService<super::PaxosAccept>
+                    for ProposeSvc<T> {
+                        type Response = super::PaxosAck;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
                         fn call(
                             &mut self,
-                            request: tonic::Request<super::PaxosPropose>,
+                            request: tonic::Request<super::PaxosAccept>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
-                            let fut =
-                                async move { <T as PaxosService>::propose(&inner, request).await };
+                            let fut = async move {
+                                <T as PaxosService>::propose(&inner, request).await
+                            };
                             Box::pin(fut)
                         }
                     }
@@ -1125,57 +1184,23 @@ pub mod paxos_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/job_management.PaxosService/Commit" => {
-                    #[allow(non_camel_case_types)]
-                    struct CommitSvc<T: PaxosService>(pub Arc<T>);
-                    impl<T: PaxosService> tonic::server::UnaryService<super::PaxosCommit> for CommitSvc<T> {
-                        type Response = super::PaxosCommitResponse;
-                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
-                        fn call(
-                            &mut self,
-                            request: tonic::Request<super::PaxosCommit>,
-                        ) -> Self::Future {
-                            let inner = Arc::clone(&self.0);
-                            let fut =
-                                async move { <T as PaxosService>::commit(&inner, request).await };
-                            Box::pin(fut)
-                        }
-                    }
-                    let accept_compression_encodings = self.accept_compression_encodings;
-                    let send_compression_encodings = self.send_compression_encodings;
-                    let max_decoding_message_size = self.max_decoding_message_size;
-                    let max_encoding_message_size = self.max_encoding_message_size;
-                    let inner = self.inner.clone();
-                    let fut = async move {
-                        let method = CommitSvc(inner);
-                        let codec = tonic::codec::ProstCodec::default();
-                        let mut grpc = tonic::server::Grpc::new(codec)
-                            .apply_compression_config(
-                                accept_compression_encodings,
-                                send_compression_encodings,
-                            )
-                            .apply_max_message_size_config(
-                                max_decoding_message_size,
-                                max_encoding_message_size,
+                _ => {
+                    Box::pin(async move {
+                        let mut response = http::Response::new(empty_body());
+                        let headers = response.headers_mut();
+                        headers
+                            .insert(
+                                tonic::Status::GRPC_STATUS,
+                                (tonic::Code::Unimplemented as i32).into(),
                             );
-                        let res = grpc.unary(method, req).await;
-                        Ok(res)
-                    };
-                    Box::pin(fut)
+                        headers
+                            .insert(
+                                http::header::CONTENT_TYPE,
+                                tonic::metadata::GRPC_CONTENT_TYPE,
+                            );
+                        Ok(response)
+                    })
                 }
-                _ => Box::pin(async move {
-                    let mut response = http::Response::new(empty_body());
-                    let headers = response.headers_mut();
-                    headers.insert(
-                        tonic::Status::GRPC_STATUS,
-                        (tonic::Code::Unimplemented as i32).into(),
-                    );
-                    headers.insert(
-                        http::header::CONTENT_TYPE,
-                        tonic::metadata::GRPC_CONTENT_TYPE,
-                    );
-                    Ok(response)
-                }),
             }
         }
     }
@@ -1204,7 +1229,7 @@ pub mod node_health_service_server {
         dead_code,
         missing_docs,
         clippy::wildcard_imports,
-        clippy::let_unit_value
+        clippy::let_unit_value,
     )]
     use tonic::codegen::*;
     /// Generated trait containing gRPC methods that should be implemented for use with NodeHealthServiceServer.
@@ -1213,7 +1238,10 @@ pub mod node_health_service_server {
         async fn get_node_health(
             &self,
             request: tonic::Request<super::NodeHealthRequest>,
-        ) -> std::result::Result<tonic::Response<super::NodeHealthResponse>, tonic::Status>;
+        ) -> std::result::Result<
+            tonic::Response<super::NodeHealthResponse>,
+            tonic::Status,
+        >;
     }
     #[derive(Debug)]
     pub struct NodeHealthServiceServer<T> {
@@ -1236,7 +1264,10 @@ pub mod node_health_service_server {
                 max_encoding_message_size: None,
             }
         }
-        pub fn with_interceptor<F>(inner: T, interceptor: F) -> InterceptedService<Self, F>
+        pub fn with_interceptor<F>(
+            inner: T,
+            interceptor: F,
+        ) -> InterceptedService<Self, F>
         where
             F: tonic::service::Interceptor,
         {
@@ -1291,18 +1322,23 @@ pub mod node_health_service_server {
                 "/job_management.NodeHealthService/GetNodeHealth" => {
                     #[allow(non_camel_case_types)]
                     struct GetNodeHealthSvc<T: NodeHealthService>(pub Arc<T>);
-                    impl<T: NodeHealthService> tonic::server::UnaryService<super::NodeHealthRequest>
-                        for GetNodeHealthSvc<T>
-                    {
+                    impl<
+                        T: NodeHealthService,
+                    > tonic::server::UnaryService<super::NodeHealthRequest>
+                    for GetNodeHealthSvc<T> {
                         type Response = super::NodeHealthResponse;
-                        type Future = BoxFuture<tonic::Response<Self::Response>, tonic::Status>;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
                         fn call(
                             &mut self,
                             request: tonic::Request<super::NodeHealthRequest>,
                         ) -> Self::Future {
                             let inner = Arc::clone(&self.0);
                             let fut = async move {
-                                <T as NodeHealthService>::get_node_health(&inner, request).await
+                                <T as NodeHealthService>::get_node_health(&inner, request)
+                                    .await
                             };
                             Box::pin(fut)
                         }
@@ -1329,19 +1365,23 @@ pub mod node_health_service_server {
                     };
                     Box::pin(fut)
                 }
-                _ => Box::pin(async move {
-                    let mut response = http::Response::new(empty_body());
-                    let headers = response.headers_mut();
-                    headers.insert(
-                        tonic::Status::GRPC_STATUS,
-                        (tonic::Code::Unimplemented as i32).into(),
-                    );
-                    headers.insert(
-                        http::header::CONTENT_TYPE,
-                        tonic::metadata::GRPC_CONTENT_TYPE,
-                    );
-                    Ok(response)
-                }),
+                _ => {
+                    Box::pin(async move {
+                        let mut response = http::Response::new(empty_body());
+                        let headers = response.headers_mut();
+                        headers
+                            .insert(
+                                tonic::Status::GRPC_STATUS,
+                                (tonic::Code::Unimplemented as i32).into(),
+                            );
+                        headers
+                            .insert(
+                                http::header::CONTENT_TYPE,
+                                tonic::metadata::GRPC_CONTENT_TYPE,
+                            );
+                        Ok(response)
+                    })
+                }
             }
         }
     }
