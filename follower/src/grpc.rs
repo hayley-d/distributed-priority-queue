@@ -2,9 +2,11 @@ use crate::job_management::paxos_service_server::PaxosService;
 use crate::job_management::{Job, PaxosAccept, PaxosAck, PaxosPrepare, PaxosPromise};
 use crate::min_heap::MinHeap;
 use log::{error, info};
+use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tonic::{Request, Response, Status};
+use uuid::Uuid;
 
 /// The current Paxos state
 #[derive(Debug)]
@@ -95,16 +97,30 @@ impl PaxosService for LocalPaxosService {
     async fn accept(&self, request: Request<PaxosAccept>) -> Result<Response<PaxosAck>, Status> {
         let mut state = self.state.lock().await;
         let propose = request.into_inner();
+
+        let job = match propose.proposed_job {
+            Some(job) => job,
+            None => {
+                error!(target: "error_logger","Failed Accept: no job provided in accept message");
+                return Err(Status::internal("No job provided in accept message"));
+            }
+        };
+
+        let job_id: Uuid = match Uuid::from_str(job.job_id.as_str()) {
+            Ok(id) => id,
+            Err(_) => {
+                error!(target: "error_logger","Failed Accept: no job provided in accept message");
+                return Err(Status::internal("No job provided in accept message"));
+            }
+        };
+
+        let time = state.increment_time();
+
         info!(target:"error_logger","Paxos Accept message recieved with proposal number {}",propose.proposal_number);
-        if propose.proposal_number >= state.promised_proposal {
-            state.accepted_proposal = propose.proposal_number;
-            state.accepted_value = match propose.proposed_job {
-                Some(job) => Some(job.clone()),
-                None => {
-                    error!(target: "error_logger","Failed Accept: no job provided in accept message");
-                    return Err(Status::internal("No job provided in accept message"));
-                }
-            };
+
+        if propose.proposal_number > state.accepted_proposal {
+            state.accepted_value = Some(job.clone());
+            state.queue.insert(job.priority as u32, job_id, time);
             Ok(Response::new(PaxosAck {
                 proposal_number: propose.proposal_number,
             }))
