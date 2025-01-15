@@ -156,11 +156,7 @@ pub mod load_balancer {
                 let weight = match Self::get_weight(&node.address).await {
                     Ok(w) => w,
                     Err(_) => {
-                        error!(
-                            "Failed to get node health status from address: {}",
-                            node.address
-                        );
-                        self.available_nodes -= 1;
+                        error!(target:"error_logger","Failed to get node health status from address: {}",node.address);
                         remove_nodes.push(i);
                         continue;
                     }
@@ -187,8 +183,10 @@ pub mod load_balancer {
             }
         }
 
+        /// Updates the weights of the nodes the load balancer distributes to.
+        /// Periodically triggered for dynamic distribution based on updated weighting.
         async fn update_weighting(&mut self) {
-            let mut weights: Vec<f32> = Vec::with_capacity(self.available_nodes as usize + 1);
+            let mut weights: Vec<f32> = Vec::with_capacity(self.nodes.len() + 1);
 
             let mut remove_nodes: Vec<usize> = Vec::new();
             for (i, node) in self.nodes.iter().enumerate() {
