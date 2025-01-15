@@ -69,15 +69,12 @@ impl PaxosService for LocalPaxosService {
         let prepare = request.into_inner();
         info!(target:"request_logger","Paxos Prepare recieved with proposal number {}",prepare.proposal_number);
 
-        if prepare.proposal_number >= state.promised_proposal {
-            state.promised_proposal = prepare.proposal_number;
+        if prepare.proposal_number > state.accepted_proposal {
+            state.accepted_proposal = prepare.proposal_number;
             Ok(Response::new(PaxosPromise {
                 proposal_number: prepare.proposal_number,
-                accepted_value: state
-                    .accepted_value
-                    .as_ref()
-                    .map(|job| job.priority)
-                    .unwrap_or(0),
+                highest_proposal: state.accepted_proposal,
+                promise: state.accepted_proposal == prepare.proposal_number,
             }))
         } else {
             error!(target:"error_logger","Failed Paxos proposal: number was less than promised");
@@ -90,14 +87,14 @@ impl PaxosService for LocalPaxosService {
     async fn propose(&self, request: Request<PaxosAccept>) -> Result<Response<PaxosAck>, Status> {
         let mut state = self.state.lock().await;
         let propose = request.into_inner();
-        info!(target:"error_logger","Paxos Proposal recieved with proposal number {}",propose.proposal_number);
+        info!(target:"error_logger","Paxos Accept message recieved with proposal number {}",propose.proposal_number);
         if propose.proposal_number >= state.promised_proposal {
             state.accepted_proposal = propose.proposal_number;
             state.accepted_value = match propose.proposed_job {
                 Some(job) => Some(job.clone()),
                 None => {
-                    error!(target: "error_logger","Failed proposal: no job provided in proposal");
-                    return Err(Status::internal("No job provided in proposal"));
+                    error!(target: "error_logger","Failed Accept: no job provided in accept message");
+                    return Err(Status::internal("No job provided in accept message"));
                 }
             };
             Ok(Response::new(PaxosAck {
