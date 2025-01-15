@@ -20,6 +20,7 @@ async fn rocket() -> Rocket<Build> {
     log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
 
     let state = ManagerState::new(nodes.clone());
+
     let load_balancer: LoadBalancer = match LoadBalancer::new(&mut nodes).await {
         Ok(lb) => lb,
         Err(_) => {

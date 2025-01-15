@@ -5,7 +5,7 @@ package job_management;
 
 // Job structure
 message Job {
-  int64 job_id = 1;  
+  string job_id = 1;  
   int32 priority = 2;
   bytes payload = 3;
 }
@@ -18,7 +18,7 @@ message EnqueueRequest {
 
 // Request for getting a task
 message JobRequest {
-  int64 job_id = 1;
+  string job_id = 1;
 }
 
 // Response containing task data
@@ -26,36 +26,27 @@ message JobResponse {
   Job job = 1;
 }
 
-// Paxos messages
+// Paxos Prepare message sent from proposer to acceptor
 message PaxosPrepare {
-  int32 proposal_number = 1; // a unique identifier for current proposal
+  int32 proposal_number = 1;
 }
 
+// Paxos Promise message sent from the acceptor to the proposer
 message PaxosPromise {
-  int32 proposal_number = 1; // Proposal number being accepted
-  int32 accepted_value = 2; 
+  int32 proposal_number = 1;
+  int32 highest_proposal = 2; 
+  bool promise = 3;
 }
 
 // Sent from the leader to the follower
-message PaxosPropose {
+message PaxosAccept {
   int32 proposal_number = 1;
   Job proposed_job = 2;
 }
 
-// Sent from the follower to the leader
-message PaxosAccept {
+// Sent from the follower to the leader to acknowledge the accept message
+message PaxosAck {
   int32 proposal_number = 1;
-  bool accepted = 2;
-}
-
-// Sent from the leader to the follower
-message PaxosCommit {
-    int32 proposal_number = 1;
-    bool commit = 2;
-}
-
-message PaxosCommitResponse {
-    int32 proposal_number = 1;
 }
 
 // Message to represent a request to get a job (long-polling)
@@ -91,9 +82,7 @@ service LongPollingService {
 
 service PaxosService {
   rpc Prepare (PaxosPrepare) returns (PaxosPromise);
-  rpc Propose (PaxosPropose) returns (PaxosAccept);
-  rpc Commit (PaxosCommit) returns (PaxosCommitResponse);
-
+  rpc Propose (PaxosAccept) returns (PaxosAck);
 }
 
 service NodeHealthService {
