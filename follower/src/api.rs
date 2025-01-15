@@ -144,8 +144,8 @@ pub async fn dequeue_amount(
             .query_one(&query, &[&(node.job_id as i64)])
             .await
             .map_err(|_| {
-                error!("Error: Failed to run SELECT query");
-                ApiError::DatabaseError(format!("Error database SELECT query failed."))
+                error!(target:"error_logger","Error: Failed to run SELECT query");
+                ApiError::DatabaseError("Error database SELECT query failed.".to_string())
             })?;
 
         jobs.push(DequeueResponse {
