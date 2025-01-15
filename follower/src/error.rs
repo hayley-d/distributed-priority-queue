@@ -1,10 +1,9 @@
-use std::fmt;
-use std::io::Cursor;
-
 use rocket::http::{ContentType, Status};
 use rocket::response::Responder;
 use rocket::{Request, Response};
 use serde::{Deserialize, Serialize};
+use std::fmt;
+use std::io::Cursor;
 
 /// Custom Error type for API error responses.
 #[derive(Debug, Serialize, Deserialize)]
@@ -38,10 +37,10 @@ impl<'r> Responder<'r, 'static> for ApiError {
             ApiError::EmptyHeapError => Status::InternalServerError,
         };
 
-        return Response::build()
+        Response::build()
             .status(status)
             .header(ContentType::Plain)
             .sized_body(message.len(), Cursor::new(message))
-            .ok();
+            .ok()
     }
 }

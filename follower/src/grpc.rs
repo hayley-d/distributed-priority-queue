@@ -24,34 +24,35 @@ pub struct PaxosState {
 }
 
 impl PaxosState {
-    pub fn new() -> Self {
+    pub fn new() -> Result<Self, String> {
         log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
-        let node_id: u64 = match std::env::args().collect::<Vec<String>>().get(1) {
+        let _: u64 = match std::env::args().collect::<Vec<String>>().get(1) {
             Some(id) => match id.parse::<u64>() {
                 Ok(i) => i,
                 Err(_) => {
-                    error!("Failed to parse node id: Node id must be of type u64");
-                    std::process::exit(1);
+                    error!(target:"error_logger","Failed to parse node id: Node id must be of type u64");
+                    return Err("Failed to parse node id into a u64".to_string());
                 }
             },
             None => {
-                error!("No node id provided in command line arguments: could not start node");
-                std::process::exit(1);
+                error!(target:"error_logger","No node id provided in command line arguments: could not start node");
+                return Err("No node id provided in command line arguments".to_string());
             }
         };
-        PaxosState {
+
+        Ok(PaxosState {
             promised_proposal: 0,
             accepted_proposal: 0,
             accepted_value: None,
             queue: MinHeap::new(0.5),
             lamport_timestamp: 0,
-        }
+        })
     }
 
     pub fn increment_time(&mut self) -> u64 {
         let temp = self.lamport_timestamp;
         self.lamport_timestamp += 1;
-        return temp;
+        temp
     }
 }
 
@@ -68,10 +69,7 @@ impl PaxosService for LocalPaxosService {
     ) -> Result<Response<PaxosPromise>, Status> {
         let mut state = self.state.lock().await;
         let prepare = request.into_inner();
-        info!(
-            "Paxos Prepare recieved with proposal number {}",
-            prepare.proposal_number
-        );
+        info!(target:"request_logger","Paxos Prepare recieved with proposal number {}",prepare.proposal_number);
 
         if prepare.proposal_number >= state.promised_proposal {
             state.promised_proposal = prepare.proposal_number;
@@ -84,7 +82,7 @@ impl PaxosService for LocalPaxosService {
                     .unwrap_or(0),
             }))
         } else {
-            error!("Failed Paxos proposal: number was less than promised");
+            error!(target:"error_logger","Failed Paxos proposal: number was less than promised");
             Err(Status::failed_precondition(
                 "Proposal number is less than promised.",
             ))
@@ -121,46 +119,6 @@ impl PaxosService for LocalPaxosService {
             Err(Status::failed_precondition(
                 "Proposal number is less than promised.",
             ))
-        }
-    }
-
-    async fn commit(
-        &self,
-        request: Request<PaxosCommit>,
-    ) -> Result<Response<PaxosCommitResponse>, Status> {
-        let mut state = self.state.lock().await;
-        let commit = &request.into_inner();
-        info!(
-            "Paxos Commit recieved with proposal number {} and status {}",
-            commit.proposal_number,
-            match commit.commit {
-                true => "success",
-                _ => "failed",
-            }
-        );
-
-        let time = state.increment_time();
-        if commit.commit {
-            let job: Option<Job> = state.accepted_value.clone();
-            match job {
-                Some(job) => {
-                    state
-                        .queue
-                        .insert(job.priority as u32, job.job_id as u64, time);
-                    state.accepted_value = None;
-
-                    Ok(Response::new(PaxosCommitResponse {
-                        proposal_number: commit.proposal_number,
-                    }))
-                }
-                None => {
-                    error!("Failed Paxos commit: no accpeted value to commit");
-                    Err(Status::failed_precondition("No accepted value to commit."))
-                }
-            }
-        } else {
-            error!("Failed Paxos commit: commit falg is false");
-            Err(Status::failed_precondition("Commit flag is false."))
         }
     }
 }
