@@ -317,73 +317,73 @@ mod tests {
             ]
         );
 
-        min_heap.insert(4, 5, 4);
+        min_heap.insert(4, ids[4], 4);
         assert_eq!(
             min_heap.heap,
             vec![
-                HeapNode::new(4, 1, 3),
-                HeapNode::new(3, 2, 2),
-                HeapNode::new(2, 3, 1),
-                HeapNode::new(1, 5, 0),
-                HeapNode::new(5, 4, 4)
+                HeapNode::new(ids[3], 1, 3),
+                HeapNode::new(ids[2], 2, 2),
+                HeapNode::new(ids[1], 3, 1),
+                HeapNode::new(ids[0], 5, 0),
+                HeapNode::new(ids[4], 4, 4)
             ]
         );
 
-        min_heap.insert(2, 6, 5);
+        min_heap.insert(2, ids[5], 5);
         assert_eq!(
             min_heap.heap,
             vec![
-                HeapNode::new(4, 1, 3),
-                HeapNode::new(3, 2, 2),
-                HeapNode::new(6, 2, 5),
-                HeapNode::new(1, 5, 0),
-                HeapNode::new(5, 4, 4),
-                HeapNode::new(2, 3, 1),
+                HeapNode::new(ids[3], 1, 3),
+                HeapNode::new(ids[2], 2, 2),
+                HeapNode::new(ids[5], 2, 5),
+                HeapNode::new(ids[0], 5, 0),
+                HeapNode::new(ids[4], 4, 4),
+                HeapNode::new(ids[1], 3, 1),
             ]
         );
 
-        min_heap.insert(2, 7, 6);
+        min_heap.insert(2, ids[6], 6);
         assert_eq!(
             min_heap.heap,
             vec![
-                HeapNode::new(4, 1, 3),
-                HeapNode::new(3, 2, 2),
-                HeapNode::new(6, 2, 5),
-                HeapNode::new(1, 5, 0),
-                HeapNode::new(5, 4, 4),
-                HeapNode::new(2, 3, 1),
-                HeapNode::new(7, 2, 6)
+                HeapNode::new(ids[3], 1, 3),
+                HeapNode::new(ids[2], 2, 2),
+                HeapNode::new(ids[5], 2, 5),
+                HeapNode::new(ids[0], 5, 0),
+                HeapNode::new(ids[4], 4, 4),
+                HeapNode::new(ids[1], 3, 1),
+                HeapNode::new(ids[6], 2, 6)
             ]
         );
 
-        min_heap.insert(2, 8, 7);
+        min_heap.insert(2, ids[7], 7);
         assert_eq!(
             min_heap.heap,
             vec![
-                HeapNode::new(4, 1, 3),
-                HeapNode::new(3, 2, 2),
-                HeapNode::new(6, 2, 5),
-                HeapNode::new(8, 2, 7),
-                HeapNode::new(5, 4, 4),
-                HeapNode::new(2, 3, 1),
-                HeapNode::new(7, 2, 6),
-                HeapNode::new(1, 5, 0),
+                HeapNode::new(ids[3], 1, 3),
+                HeapNode::new(ids[2], 2, 2),
+                HeapNode::new(ids[5], 2, 5),
+                HeapNode::new(ids[7], 2, 7),
+                HeapNode::new(ids[4], 4, 4),
+                HeapNode::new(ids[1], 3, 1),
+                HeapNode::new(ids[6], 2, 6),
+                HeapNode::new(ids[0], 5, 0),
             ]
         );
 
-        min_heap.insert(1, 9, 8);
+        min_heap.insert(1, ids[8], 8);
         assert_eq!(
             min_heap.heap,
             vec![
-                HeapNode::new(4, 1, 3),
-                HeapNode::new(9, 1, 8),
-                HeapNode::new(6, 2, 5),
-                HeapNode::new(3, 2, 2),
-                HeapNode::new(5, 4, 4),
-                HeapNode::new(2, 3, 1),
-                HeapNode::new(7, 2, 6),
-                HeapNode::new(1, 5, 0),
-                HeapNode::new(8, 2, 7),
+                HeapNode::new(ids[3], 1, 3),
+                HeapNode::new(ids[8], 1, 8),
+                HeapNode::new(ids[5], 2, 5),
+                HeapNode::new(ids[2], 2, 2),
+                HeapNode::new(ids[4], 4, 4),
+                HeapNode::new(ids[1], 3, 1),
+                HeapNode::new(ids[6], 2, 6),
+                HeapNode::new(ids[0], 5, 0),
+                HeapNode::new(ids[7], 2, 7),
             ]
         );
     }
