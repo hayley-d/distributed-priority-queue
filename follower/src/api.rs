@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio_postgres::Client;
+use uuid::Uuid;
 
 /// DequeueResponse represents the response sent by the node when the /dequeue route is used.
 /// `job_id`: The randomly generated job_id
@@ -14,7 +15,7 @@ use tokio_postgres::Client;
 /// `payload': the byte payload the job contains.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DequeueResponse {
-    job_id: i64,
+    job_id: Uuid,
     priority: i32,
     payload: Vec<u8>,
 }
@@ -43,13 +44,16 @@ pub struct EnqueueRequest {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreationResponse {
     message: String,
-    job_id: u64,
+    job_id: Uuid,
 }
 
+/// Update Request to update a job currently in the queue.
+/// `priority`: The priority the job should be updated to.
+/// `job_id`: The target job to update.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateRequest {
     priority: i32,
-    job_id: i64,
+    job_id: Uuid,
 }
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateResponse {
