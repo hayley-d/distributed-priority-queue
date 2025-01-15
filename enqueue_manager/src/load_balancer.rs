@@ -101,18 +101,14 @@ pub mod load_balancer {
         pub async fn new(
             addresses: &mut Vec<String>,
         ) -> Result<Self, Box<dyn std::error::Error + 'static>> {
-            let mut nodes: Vec<Node> = Vec::with_capacity(available_nodes as usize);
-            let mut weights: Vec<f32> = Vec::with_capacity(available_nodes as usize);
+            let mut nodes: Vec<Node> = Vec::with_capacity(addresses.len());
+            let mut weights: Vec<f32> = Vec::with_capacity(addresses.len());
 
             for (i, address) in addresses.clone().iter().enumerate() {
                 let weight: f32 = match Self::get_weight(&address).await {
                     Ok(w) => w,
                     Err(_) => {
-                        error!(
-                            "Failed to get response for node health from address: {}",
-                            address
-                        );
-                        available_nodes = available_nodes - 1;
+                        error!(target: "error_logger","Failed to get response for node health from address: {}",address);
                         addresses.remove(i);
                         continue;
                     }
