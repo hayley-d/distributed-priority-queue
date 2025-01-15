@@ -1,3 +1,4 @@
+use dotenv::dotenv;
 use enqueue_manager::job_management::EnqueueRequest;
 use enqueue_manager::load_balancer::load_balancer_logic::LoadBalancer;
 use enqueue_manager::manager_state::ManagerState;
@@ -6,6 +7,7 @@ use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::{Build, Rocket};
 use serde::{Deserialize, Serialize};
+use std::env;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
@@ -14,7 +16,7 @@ extern crate rocket;
 
 #[launch]
 async fn rocket() -> Rocket<Build> {
-    let mut nodes: Vec<String> = vec!["http://node1".to_string(), "http://node2".to_string()];
+    let mut nodes: Vec<String> = get_nodes();
     log4rs::init_file("log4rs.yaml", Default::default()).unwrap();
 
     let state = ManagerState::new(nodes.clone());
@@ -30,6 +32,18 @@ async fn rocket() -> Rocket<Build> {
         .manage(state)
         .manage(load_balancer)
         .mount("/", routes![enqueue])
+}
+
+fn get_nodes() -> Vec<String> {
+    dotenv().ok();
+    let mut nodes: Vec<String> = Vec::new();
+    for (key, value) in env::vars() {
+        if key.starts_with("NODE") {
+            nodes.push(value);
+        }
+    }
+    println!("Loaded nodes");
+    nodes
 }
 
 #[derive(Debug, Serialize, Deserialize)]
