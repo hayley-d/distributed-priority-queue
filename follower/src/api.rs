@@ -83,16 +83,16 @@ pub async fn dequeue(
         .prepare("SELECT * FROM jobs WHERE job_id = $1")
         .await
         .map_err(|_| {
-            error!("Error: Failed to create SELECT query");
-            ApiError::DatabaseError(format!("Error creating query"))
+            error!(target:"error_logger","Error: Failed to create SELECT query");
+            ApiError::DatabaseError("Error creating query".to_string())
         })?;
 
     let row = client
         .query_one(&query, &[&(node.job_id as i64)])
         .await
         .map_err(|_| {
-            error!("Error: Attempt to SELECT from database failed");
-            ApiError::DatabaseError(format!("Error database SELECT query failed."))
+            error!(target:"error_logger","Error: Attempt to SELECT from database failed");
+            ApiError::DatabaseError("Error database SELECT query failed.".to_string())
         })?;
 
     return Ok(Json(DequeueResponse {
