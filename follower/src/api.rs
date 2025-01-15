@@ -38,6 +38,8 @@ pub struct EnqueueRequest {
 
 /// CreationResponse is the response sent by the node when a job is successfully added into the
 /// priortiy queue.
+/// `message`: The success message to indicate the job was successfully added to the queue.
+/// `job_id`: Corresponds to the job added to the queue.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreationResponse {
     message: String,
