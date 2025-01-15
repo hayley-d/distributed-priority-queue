@@ -220,7 +220,15 @@ pub mod load_balancer {
             }
         }
 
-        /// Calculates the weight of the leader
+        /// Calculates the weight of the leader node though the use of gRPC to retrive the node
+        /// statistics for calculation the weight.
+        ///
+        /// # Arguments
+        /// `address`: The url address of the target node to calculate the weight of.
+        ///
+        /// # Returns
+        /// A Result object that either returns an Ok(f32) or an Err(Box<dyn std::error::Error +
+        /// 'static>)
         async fn get_weight(address: &String) -> Result<f32, Box<dyn std::error::Error + 'static>> {
             let request: NodeHealthRequest = NodeHealthRequest {};
 
