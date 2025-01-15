@@ -82,15 +82,23 @@ pub mod load_balancer {
         pub fn increment_time(&mut self) -> u64 {
             let temp = self.lamport_timestamp;
             self.lamport_timestamp += 1;
-            return temp;
+            temp
         }
 
+        /// Inserts a job into the buffer of the load balancer
         pub fn insert(&mut self, job: EnqueueRequest) {
             self.buffer.push_back(job);
         }
 
+        /// Creates a new load balancer state.
+        ///
+        /// # Arguments
+        /// `addresses`: A vector of url addresses to the nodes in the distributed system.
+        ///
+        /// # Returns
+        /// A Result object which is either an Ok(LoadBalancer) or an Err(Box<dyn
+        /// std::error::Error>)
         pub async fn new(
-            mut available_nodes: u32,
             addresses: &mut Vec<String>,
         ) -> Result<Self, Box<dyn std::error::Error + 'static>> {
             let mut nodes: Vec<Node> = Vec::with_capacity(available_nodes as usize);
